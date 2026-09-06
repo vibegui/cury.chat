@@ -139,8 +139,27 @@ function buildRequest(
 	};
 }
 
+/**
+ * Uma conclusão vazia é falha, não resposta.
+ *
+ * Visto em produção: o modelo gastou os 141 tokens de saída inteiros em
+ * `reasoning_tokens` e devolveu `content` vazio. O turno foi gravado em branco
+ * e o envio retornou cedo — a pessoa no WhatsApp não recebeu nada e nada
+ * apareceu como erro. Silêncio é o pior desfecho possível: melhor um pedido de
+ * desculpas do que ausência.
+ */
+export class EmptyCompletionError extends Error {
+	constructor(readonly usage: ChatCompletionResult["usage"]) {
+		super(`modelo devolveu conteúdo vazio (completion_tokens=${usage?.completion_tokens ?? "?"})`);
+		this.name = "EmptyCompletionError";
+	}
+}
+
 type ChatCompletionJson = {
-	choices: Array<{ message: { content: string }; finish_reason?: string }>;
+	choices: Array<{
+		message: { content?: string | null; reasoning_content?: string | null };
+		finish_reason?: string;
+	}>;
 	usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
 	model?: string;
 };
@@ -247,5 +266,6 @@ export async function* chatStream(
 		reader.releaseLock();
 	}
 
+	if (!text.trim()) throw new EmptyCompletionError(usage);
 	yield { type: "done", text, model, usage };
 }
