@@ -121,3 +121,21 @@ describe("chatStream", () => {
 		expect(run()).rejects.toThrow(/openrouter via gateway: 502/);
 	});
 });
+
+describe("conclusão vazia", () => {
+	test("stream sem nenhum delta vira erro, não resposta em branco", async () => {
+		// O modo de falha visto em produção: o modelo gasta a saída inteira em
+		// reasoning_tokens e devolve content vazio. Antes disso virar erro, o
+		// turno era gravado em branco e a pessoa não recebia nada.
+		mockStream([
+			sse({ choices: [], model: "deepseek/deepseek-v4-flash", usage: { completion_tokens: 141 } }),
+			"data: [DONE]\n\n",
+		]);
+		const run = async () => {
+			for await (const _ of chatStream(env, [{ role: "user", content: "Ola" }])) {
+				// drena
+			}
+		};
+		expect(run()).rejects.toThrow(/vazio/);
+	});
+});
