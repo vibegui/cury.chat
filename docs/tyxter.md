@@ -49,7 +49,7 @@ Vars em `wrangler.toml`:
 
 ```toml
 TYXTER_API_BASE_URL = "https://api.tyxter.com"
-TYXTER_PHONE_NUMBER_ID = "cmtpq24z5005g01pqssaix42d"
+TYXTER_PHONE_NUMBER_ID = ""  # id do número, depois do Embedded Signup
 ```
 
 Secrets:
