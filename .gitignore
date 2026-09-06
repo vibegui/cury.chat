@@ -1,0 +1,18 @@
+node_modules/
+.DS_Store
+dist/
+parity-output/
+.dev.vars
+.wrangler/
+*.log
+.env
+.env.*
+.context/
+storage/
+*.local
+.tanstack
+.nitro
+worker-configuration.d.ts
+
+# corpus downloads before conversion — only the .md is committed
+corpus/raw/

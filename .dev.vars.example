@@ -1,0 +1,21 @@
+# Copy to .dev.vars (gitignored). For production use `wrangler secret put NAME`.
+
+# Meta WhatsApp Business — see docs/whatsapp-setup.md
+META_ACCESS_TOKEN=
+META_APP_SECRET=
+META_PHONE_NUMBER_ID=
+# Pick any string. Paste the same value into Meta's webhook setup form.
+META_VERIFY_TOKEN=replace_me_choose_anything
+
+# OPTIONAL — only set if you DON'T have BYOK configured in the AI Gateway
+# dashboard (with BYOK, the Gateway injects the provider key server-side).
+# https://openrouter.ai/keys
+OPENROUTER_API_KEY=
+
+# OPTIONAL — only set if your CF AI Gateway has "Authenticated Gateway" on.
+CF_AI_GATEWAY_TOKEN=
+
+# Gate for /mcp and /test endpoints. If unset, gate is OPEN to the internet.
+# Generate: openssl rand -hex 32
+# Always set this in production: `wrangler secret put MCP_AUTH_TOKEN`
+MCP_AUTH_TOKEN=

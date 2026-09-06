@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cury.chat — converse com as ideias de Augusto Cury</title>
+<meta name="description" content="Projeto independente. Um agente de IA que conversa sobre as propostas e ideias públicas de Augusto Cury, ancorado no plano de governo e em materiais públicos. Não é a campanha.">
+<link rel="canonical" href="https://cury.chat/">
+<meta name="theme-color" content="#0b2e4f">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cury.chat/">
+<meta property="og:title" content="cury.chat — converse com as ideias de Augusto Cury">
+<meta property="og:description" content="Projeto independente, com IA, ancorado em materiais públicos. Não é a campanha.">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    --ink: #10161c;
+    --ink-soft: #4a5560;
+    --faint: #7c8792;
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --line: #e2ded6;
+    --navy: #0b2e4f;
+    --navy-soft: #e8eff5;
+    --warn-bg: #fff8e6;
+    --warn-line: #e8d49a;
+    --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    font-size: 17px;
+    line-height: 1.65;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--navy); }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 20px; }
+  .band { padding: 72px 0; }
+  .band + .band { border-top: 1px solid var(--line); }
+
+  .brand { font-weight: 800; letter-spacing: -0.4px; font-size: 18px; }
+  .brand span { color: var(--faint); font-weight: 600; }
+  header { padding: 28px 0; }
+
+  h1 {
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -1.4px;
+    font-weight: 800;
+    margin-bottom: 20px;
+  }
+  h1 em { font-style: normal; color: var(--navy); }
+  .lede { font-size: clamp(18px, 2.4vw, 21px); color: var(--ink-soft); max-width: 60ch; }
+
+  h2 {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: var(--faint);
+    margin-bottom: 20px;
+  }
+  h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.2px; }
+
+  .cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--navy); color: #fff; text-decoration: none;
+    font-weight: 700; font-size: 17px;
+    padding: 15px 28px; border-radius: 999px;
+    margin-top: 32px;
+  }
+  .cta:hover { background: #0f3d68; }
+  .cta-note { display: block; margin-top: 12px; font-size: 14px; color: var(--faint); }
+
+  .disclaimer {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-size: 15.5px;
+    line-height: 1.55;
+    margin-top: 36px;
+  }
+  .disclaimer strong { display: block; margin-bottom: 4px; }
+
+  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); }
+  .card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 10px; padding: 20px;
+  }
+  .card p { font-size: 15.5px; color: var(--ink-soft); }
+
+  ul.sources { list-style: none; }
+  ul.sources li { padding: 14px 0; border-bottom: 1px solid var(--line); }
+  ul.sources li:last-child { border-bottom: none; }
+  ul.sources .what { font-weight: 700; }
+  ul.sources .meta { display: block; font-size: 14.5px; color: var(--ink-soft); margin-top: 2px; }
+  .excluded {
+    margin-top: 24px; font-size: 15px; color: var(--ink-soft);
+    background: var(--navy-soft); border-radius: 10px; padding: 16px 18px;
+  }
+
+  dl.faq dt { font-weight: 700; margin-top: 22px; }
+  dl.faq dt:first-child { margin-top: 0; }
+  dl.faq dd { color: var(--ink-soft); font-size: 16px; }
+
+  .help {
+    border: 1px solid var(--line); background: var(--surface);
+    border-radius: 10px; padding: 20px; font-size: 16px;
+  }
+  .help strong { color: var(--navy); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 36px 0 64px;
+    font-size: 14.5px;
+    color: var(--faint);
+  }
+  footer p + p { margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap"><div class="brand">cury.chat <span>· projeto independente</span></div></div>
+</header>
+
+<section class="band" style="padding-top:24px">
+  <div class="wrap">
+    <h1>Pergunte o que <em>Augusto Cury</em> propõe — e de onde isso vem.</h1>
+    <p class="lede">
+      Um agente de inteligência artificial que conversa sobre as propostas e ideias públicas do
+      candidato, ancorado no plano de governo protocolado no TSE e em outros materiais abertos.
+      Cada resposta diz de onde saiu.
+    </p>
+
+    <a class="cta" href="https://wa.me/SEUNUMERO?text=Oi%2C%20quero%20conversar%20sobre%20as%20propostas%20do%20Augusto%20Cury" rel="noopener">
+      Falar agora no WhatsApp
+    </a>
+    <small class="cta-note">Grátis. Sem cadastro. Você conversa por mensagem, como com qualquer contato.</small>
+
+    <div class="disclaimer">
+      <strong>Leia antes de começar.</strong>
+      Este é um projeto independente. Não é a campanha, não é o Avante e não é Augusto Cury.
+      As respostas são <b>geradas por inteligência artificial</b> a partir de materiais públicos e
+      podem conter erros — confira sempre na fonte original. O agente não pede voto e não fala em
+      nome de ninguém.
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>Para que serve</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Para o eleitor</h3>
+        <p>Descubra o que o candidato propõe sobre um tema específico, sem ler 200 páginas.</p>
+      </div>
+      <div class="card">
+        <h3>Para jornalistas</h3>
+        <p>Localize rápido a passagem do plano de governo que trata de um assunto, com a fonte.</p>
+      </div>
+      <div class="card">
+        <h3>Para pesquisadores</h3>
+        <p>Explore as ideias da Teoria da Inteligência Multifocal e como elas viram proposta pública.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="fontes">
+  <div class="wrap">
+    <h2>De onde vêm as respostas</h2>
+    <ul class="sources">
+      <li>
+        <span class="what">Plano de governo “O Brasil dos Nossos Sonhos”</span>
+        <span class="meta">
+          Cerca de 200 páginas, protocolado no TSE em 13 de agosto de 2026.
+          <a href="https://divulgacandcontas.tse.jus.br/" rel="noopener">DivulgaCandContas / TSE</a>
+        </span>
+      </li>
+      <li>
+        <span class="what">E-book gratuito sobre a Teoria da Inteligência Multifocal</span>
+        <span class="meta">Distribuído pelo próprio autor em <a href="https://augustocury.com.br/" rel="noopener">augustocury.com.br</a>.</span>
+      </li>
+      <li>
+        <span class="what">Falas públicas e entrevistas</span>
+        <span class="meta">Transcrições de vídeos públicos do canal oficial e de entrevistas de campanha.</span>
+      </li>
+      <li>
+        <span class="what">Verbetes da Wikipédia</span>
+        <span class="meta">Biografia e campanha presidencial de 2026, sob licença CC BY-SA.</span>
+      </li>
+      <li>
+        <span class="what">Matérias jornalísticas</span>
+        <span class="meta">Perfis e análises de propostas publicados por veículos de imprensa, com atribuição.</span>
+      </li>
+    </ul>
+
+    <p class="excluded">
+      <b>O que não está aqui:</b> os livros comerciais de Augusto Cury. Eles são protegidos por
+      direito autoral e não foram incluídos. Se você pedir uma citação literal de um livro, o
+      agente vai dizer que não tem o texto — em vez de inventar uma frase e atribuí-la a ele.
+    </p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>Perguntas honestas</h2>
+    <dl class="faq">
+      <dt>Isso é oficial?</dt>
+      <dd>Não. Nenhum vínculo com Augusto Cury, com a campanha ou com o Avante.</dd>
+
+      <dt>O agente é o Cury falando?</dt>
+      <dd>Não. Ele fala <i>sobre</i> as ideias dele, em terceira pessoa, e nunca se passa por ele. Não há voz nem imagem sintética.</dd>
+
+      <dt>Ele pede voto?</dt>
+      <dd>Não. Explica propostas e recusa fazer campanha ou atacar outros candidatos.</dd>
+
+      <dt>Pode errar?</dt>
+      <dd>Pode. É um sistema de IA. Quando não tem base, ele deve dizer que não sabe — mas confira na fonte antes de repassar.</dd>
+
+      <dt>Vocês guardam minhas mensagens?</dt>
+      <dd>A conversa fica armazenada por tempo limitado para manter o contexto do diálogo. Não envie dados sensíveis.</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>Se você precisa de ajuda agora</h2>
+    <p class="help">
+      Este site não presta atendimento em saúde mental e o agente não substitui profissional.
+      Se você está em sofrimento, ligue para o <strong>CVV — 188</strong>: gratuito, 24 horas,
+      todos os dias (<a href="https://www.cvv.org.br/" rel="noopener">cvv.org.br</a>).
+      Em emergência, <strong>SAMU 192</strong>.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b>cury.chat</b> — projeto independente, sem vínculo com Augusto Cury, com a campanha ou com o Avante.</p>
+    <p>Conteúdo das respostas gerado por inteligência artificial a partir de fontes públicas listadas em <a href="#fontes">De onde vêm as respostas</a>.</p>
+    <p>Marcas e nomes citados pertencem a seus respectivos titulares.</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+/* Host theme tokens (set by deco studio via the AppBridge). When the UI runs
+   outside studio (local dev), these fallbacks kick in. */
+:root {
+	--color-background-primary: hsl(0 0% 100%);
+	--color-background-secondary: hsl(240 4.8% 95.9%);
+	--color-background-tertiary: hsl(240 4.8% 95.9%);
+	--color-background-danger: hsl(0 84.2% 60.2%);
+	--color-text-primary: hsl(240 10% 3.9%);
+	--color-text-secondary: hsl(240 3.8% 46.1%);
+	--color-border-primary: hsl(240 5.9% 90%);
+	--color-border-secondary: hsl(240 5.9% 90%);
+	--color-ring-primary: hsl(240 5.9% 10%);
+
+	--primary: hsl(142 70% 38%);
+	--primary-foreground: hsl(0 0% 98%);
+}
+
+[data-theme="dark"] {
+	--color-background-primary: hsl(240 10% 3.9%);
+	--color-background-secondary: hsl(240 3.7% 15.9%);
+	--color-background-tertiary: hsl(240 3.7% 15.9%);
+	--color-background-danger: hsl(0 62.8% 30.6%);
+	--color-text-primary: hsl(0 0% 98%);
+	--color-text-secondary: hsl(240 5% 64.9%);
+	--color-border-primary: hsl(240 3.7% 15.9%);
+	--color-border-secondary: hsl(240 3.7% 15.9%);
+	--color-ring-primary: hsl(240 4.9% 83.9%);
+
+	--primary: hsl(142 70% 45%);
+	--primary-foreground: hsl(240 10% 3.9%);
+}
+
+@layer base {
+	button,
+	a,
+	select,
+	summary,
+	[role="button"],
+	[role="tab"] {
+		cursor: pointer;
+	}
+}
+
+/* Threads table affordance: hovering a row underlines the contact title to
+   signal "click opens the thread". Hovering the select cell (checkbox) does
+   NOT underline — that cell only toggles selection. The :has() rule is more
+   specific, so it wins when the select cell is hovered. */
+tr.thread-row:hover .thread-title {
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+tr.thread-row:has(.thread-select:hover) .thread-title {
+	text-decoration: none;
+}
+
+@theme inline {
+	--color-background: var(--color-background-primary);
+	--color-foreground: var(--color-text-primary);
+	--color-card: var(--color-background-primary);
+	--color-card-foreground: var(--color-text-primary);
+	--color-popover: var(--color-background-primary);
+	--color-popover-foreground: var(--color-text-primary);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--color-background-secondary);
+	--color-secondary-foreground: var(--color-text-primary);
+	--color-muted: var(--color-background-secondary);
+	--color-muted-foreground: var(--color-text-secondary);
+	--color-accent: var(--color-background-tertiary);
+	--color-accent-foreground: var(--color-text-primary);
+	--color-destructive: var(--color-background-danger);
+	--color-border: var(--color-border-primary);
+	--color-input: var(--color-border-secondary);
+	--color-ring: var(--color-ring-primary);
+	--radius-DEFAULT: var(--border-radius-md, 0.5rem);
+}
