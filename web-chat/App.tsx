@@ -115,8 +115,7 @@ function ChatView() {
 	async function doShare() {
 		if (!activeId) return;
 		try {
-			const shareId = await api.share(activeId);
-			const url = `${window.location.origin}/s/${shareId}`;
+			const url = await api.share(activeId);
 			setShareUrl(url);
 			await navigator.clipboard?.writeText(url).catch(() => {});
 		} catch {

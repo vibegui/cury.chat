@@ -20,6 +20,7 @@ export interface Env {
 	AUTORAG_INSTANCE: string;
 	// Tyxter Messaging (WhatsApp transport). Environment is selected by the API
 	// key prefix (tx_sandbox_ / tx_live_), not by the URL.
+	PUBLIC_BASE_URL: string;
 	TYXTER_API_BASE_URL: string;
 	TYXTER_PHONE_NUMBER_ID: string;
 

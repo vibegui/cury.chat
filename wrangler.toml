@@ -49,6 +49,10 @@ AUTORAG_INSTANCE = "cury"
 # Tyxter Messaging — brokered WhatsApp transport. One base URL for both
 # environments; the API key prefix (tx_sandbox_ / tx_live_) picks which one.
 # TYXTER_PHONE_NUMBER_ID is the Tyxter id from GET /v1/phone-numbers.
+# Canonical public origin. Share links are built from this, not from the host
+# the browser happens to be on — otherwise opening the chat on workers.dev
+# produces links that outlive nobody's memory of which host was which.
+PUBLIC_BASE_URL = "https://cury.chat"
 TYXTER_API_BASE_URL = "https://api.tyxter.com"
 TYXTER_PHONE_NUMBER_ID = ""  # preencher após provisionar + Embedded Signup
 

@@ -270,7 +270,10 @@ chatRoute.post("/conversations/:id/share", async (c) => {
 	if (!meta.shareId) {
 		await upsertConversation(c.env, body.session, id, { shareId });
 	}
-	return c.json({ shareId });
+	// The full URL comes from the server so it is always the canonical origin,
+	// whatever host the browser used to get here.
+	const base = (c.env.PUBLIC_BASE_URL || new URL(c.req.url).origin).replace(/\/+$/, "");
+	return c.json({ shareId, url: `${base}/s/${shareId}` });
 });
 
 /**

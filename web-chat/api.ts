@@ -135,13 +135,15 @@ export async function sendStreaming(
 	}
 }
 
+/** Returns the full canonical URL — the server builds it, not the browser. */
 export async function share(id: string): Promise<string> {
 	const res = await fetch(`/api/chat/conversations/${id}/share`, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
 		body: JSON.stringify({ session: sessionId() }),
 	});
-	return (await json<{ shareId: string }>(res)).shareId;
+	const body = await json<{ shareId: string; url?: string }>(res);
+	return body.url ?? `${window.location.origin}/s/${body.shareId}`;
 }
 
 export async function loadShared(shareId: string): Promise<{ title: string; turns: Turn[] }> {

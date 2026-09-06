@@ -38,6 +38,24 @@ const landingHtml: string = landingBundle as unknown as string;
 
 const app = new Hono<{ Bindings: Env }>();
 
+/*
+ * Force HTTPS. Cloudflare's "Always Use HTTPS" zone setting does the same job,
+ * but keeping it here means the guarantee travels with the code instead of
+ * living in a dashboard nobody re-checks. Without it `window.location.origin`
+ * is `http://…` and the chat hands out insecure share links.
+ */
+app.use("*", async (c, next) => {
+	const url = new URL(c.req.url);
+	if (url.protocol === "http:") {
+		url.protocol = "https:";
+		return c.redirect(url.toString(), 301);
+	}
+	await next();
+	if (!c.res.headers.has("strict-transport-security")) {
+		c.res.headers.set("strict-transport-security", "max-age=31536000; includeSubDomains");
+	}
+});
+
 const LANDING = staticAsset(landingHtml, "text/html; charset=utf-8", CACHE_PAGE);
 app.get("/", (c) => serveStatic(LANDING, c.req.header("if-none-match")));
 
