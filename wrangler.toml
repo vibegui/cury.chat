@@ -50,7 +50,7 @@ AUTORAG_INSTANCE = "cury"
 # environments; the API key prefix (tx_sandbox_ / tx_live_) picks which one.
 # TYXTER_PHONE_NUMBER_ID is the Tyxter id from GET /v1/phone-numbers.
 TYXTER_API_BASE_URL = "https://api.tyxter.com"
-TYXTER_PHONE_NUMBER_ID = "cmtpq24z5005g01pqssaix42d"
+TYXTER_PHONE_NUMBER_ID = ""  # preencher após provisionar + Embedded Signup
 
 # Workers AI binding — used for Whisper transcription if you enable inbound voice notes.
 [ai]

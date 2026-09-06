@@ -104,28 +104,46 @@ janela. Por isso **nenhum template foi criado**. `sendTemplate` existe em
 projeto de "responde quem procura" para "procura quem não pediu" — decisão de
 produto, e com implicações eleitorais bem diferentes.
 
-## Do número de sandbox ao número que toca no seu celular
+## Sandbox não é "sem número" — é um número que não existe no Meta
 
-O número `+5517902191929` (`id=cmtpq24z5005g01pqssaix42d`) está com
-`environment: sandbox`, `meta_phone_number_id: null`, `waba_id: null`. Sandbox
-**nunca alcança telefone real** — é simulação determinística.
+Um número Salvy passa por dois registros independentes: a **camada de
+operadora** (a linha existe, recebe SMS) e a **camada do Meta** (a linha vira
+remetente WhatsApp dentro de uma WABA). `provision` só faz o primeiro.
 
-Para um número que responde no WhatsApp de verdade:
+Um número de sandbox não faz nenhum dos dois. Ele tem formato de linha real e
+os campos denunciam a simulação: `provider_number_id` prefixado com `sandbox_`
+e `monthly_fee_brl: null`. Da doc: *"a sandbox number never reaches Meta and
+takes a constant simulated health snapshot instead."*
 
-1. Chave `tx_live_`.
-2. **KYC**: declaração de veracidade no dashboard, Settings → Business identity.
-   Auto-aprovada, sem dado bancário. Sem isso: `403 kyc_required`.
-3. **Créditos BRL** na conta, senão `402`.
-4. `POST /v1/phone-numbers/provision {"ddd":"11"}` — aluga da Salvy, ainda só no
-   nível de operadora.
-5. **Browser, obrigatório**: <https://tyxter.com/connect-whatsapp> → Embedded
-   Signup do Meta. *"has no headless API equivalent."* Chamar `connect` antes
-   disso responde `409 meta_registration_required`.
-6. `GET /v1/phone-numbers/{id}` passa a devolver `meta_phone_number_id` e
-   `waba_id`. Aí atualize `TYXTER_PHONE_NUMBER_ID` e registre o webhook de novo
-   com a chave de produção — endpoints são por projeto **e** por ambiente.
+## Estado atual da conta de produção
 
-Passos 1, 2, 3 e 5 são de pessoa, não de API.
+Organização `cmtppp19v001101pqr3bi1qy0`.
+
+- Webhook registrado: `cmtpx5k5800h801pq7mvamsib` →
+  `https://cury-mcp.deco-ceo.workers.dev/tyxter/webhook`, sonda assinada
+  entregue com sucesso na primeira tentativa.
+- Números: nenhum.
+- Conexão Meta (`GET /v1/provider-connections/status`): `whatsapp.ready: false`,
+  `status: "missing"`.
+- Saldo: **R$ 0**. Plano: nenhum (`throughput_tier: starter`, `max_phones: 1`).
+
+## Falta para o número tocar num celular
+
+1. **Créditos BRL.** `provision` hoje responde `402 insufficient_balance`. KYC
+   já passou — o erro veio em saldo, não em `403 kyc_required`.
+2. `POST /v1/phone-numbers/provision {"ddd":"17"}` — **R$ 49,90/mês**, mesmo
+   preço nos 66 DDDs disponíveis. Aluga da Salvy, ainda só na operadora.
+3. **Browser, obrigatório**: <https://tyxter.com/connect-whatsapp> → Embedded
+   Signup do Meta. *"has no headless API equivalent."* Escolha **SMS**, não
+   ligação: o código chega na Salvy e aparece no dashboard da Tyxter, de onde se
+   copia para o wizard do Meta. `connect` antes disso responde
+   `409 meta_registration_required`.
+4. `GET /v1/phone-numbers/{id}` passa a devolver `meta_phone_number_id` e
+   `waba_id`. Preencher `TYXTER_PHONE_NUMBER_ID` no `wrangler.toml` e publicar.
+
+Transporte: R$ 0,05 por mensagem, mais o que o Meta cobra por conversa.
+
+Passos 1 e 3 são de pessoa, não de API.
 
 ## Isso não muda a exposição à política do Meta
 
