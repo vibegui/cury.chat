@@ -8,6 +8,10 @@ compatibility_flags = ["nodejs_compat"]
 #   META_ACCESS_TOKEN         — WhatsApp Business permanent access token
 #   META_APP_SECRET           — Meta App secret (for x-hub-signature-256 verification)
 #   META_VERIFY_TOKEN         — arbitrary string you choose; paste the same into Meta's webhook config
+#   TYXTER_API_KEY            — Tyxter API key; prefix selects the environment
+#   TYXTER_WEBHOOK_SIGNING_SECRET
+#                             — returned once by POST /v1/webhook-endpoints
+#                               (bun run tyxter:setup prints it)
 #
 # Optional secrets (only set when applicable):
 #   OPENROUTER_API_KEY        — only if you DON'T have BYOK configured in the AI
@@ -42,6 +46,11 @@ META_API_VERSION = "v23.0"
 # AutoRAG instance name. Create in dashboard (AI → AutoRAG → New) pointing at
 # the cury-corpus R2 bucket, then paste the name here. Empty = RAG off.
 AUTORAG_INSTANCE = "cury"
+# Tyxter Messaging — brokered WhatsApp transport. One base URL for both
+# environments; the API key prefix (tx_sandbox_ / tx_live_) picks which one.
+# TYXTER_PHONE_NUMBER_ID is the Tyxter id from GET /v1/phone-numbers.
+TYXTER_API_BASE_URL = "https://api.tyxter.com"
+TYXTER_PHONE_NUMBER_ID = "cmtpq24z5005g01pqssaix42d"
 
 # Workers AI binding — used for Whisper transcription if you enable inbound voice notes.
 [ai]

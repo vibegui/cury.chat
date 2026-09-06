@@ -1,47 +1,44 @@
 // Full inbound message hot path. Runs inside ctx.waitUntil after the webhook
-// responds 200 to Meta. Errors are logged but never thrown — Meta would just
-// retry, and the dedupe layer would suppress the retry.
+// has already acknowledged the provider. Errors are logged but never thrown —
+// the provider would just retry, and the dedupe layer would suppress it.
+//
+// Transport-agnostic on purpose: the route hands in an already-normalized
+// message and something that can send. Meta direct and Tyxter each build their
+// own; nothing below this line knows which one is on the wire.
 
 import { loadSystemPrompt } from "../ai/system-prompt.ts";
 import type { Env } from "../env.ts";
 import { dateStampFor } from "../lib/thread-id.ts";
-import { MetaApi } from "../services/meta.ts";
-import type { WhatsAppMessage } from "../types/whatsapp.ts";
 import { generate } from "./generate.ts";
 import { foldPreviousDay, formatMemoryBlock, loadMemory, saveMemory } from "./memory.ts";
-import { normalize } from "./normalize.ts";
+import type { NormalizedMessage } from "./normalize.ts";
 import { appendTurns, loadThread, upsertContact } from "./persist.ts";
 import { retrieve } from "./retrieve.ts";
 import { sendReply } from "./send.ts";
 
+export interface Transport {
+	sendText(to: string, body: string): Promise<unknown>;
+	markRead(messageId: string): Promise<unknown>;
+}
+
 export interface InboundContext {
-	message: WhatsAppMessage;
+	transport: Transport;
+	normalized: NormalizedMessage;
 	recipientName?: string;
-	phoneNumberId: string;
+	/** Business-side identifier, for AI Gateway metadata only. */
+	senderId: string;
 }
 
 export async function handleInbound(env: Env, ctx: InboundContext): Promise<void> {
 	const started = Date.now();
-	const { message, recipientName, phoneNumberId } = ctx;
+	const { transport, normalized, recipientName, senderId } = ctx;
 
-	if (!env.META_ACCESS_TOKEN) {
-		console.error("META_ACCESS_TOKEN not set — cannot reply.");
-		return;
-	}
-
-	const meta = new MetaApi({
-		phoneNumberId,
-		accessToken: env.META_ACCESS_TOKEN,
-		apiVersion: env.META_API_VERSION,
-	});
-
-	// Best-effort "read" indicator + typing animation. Failure here is harmless.
-	meta.markMessageAsRead(message.id).catch(() => {});
+	// Best-effort read receipt + typing indicator. Failure here is harmless.
+	transport.markRead(normalized.id).catch(() => {});
 
 	try {
-		const normalized = normalize(message);
 		if (!normalized.content.trim()) {
-			console.warn("Empty content after normalize; nothing to reply.", message.type);
+			console.warn("Empty content after normalize; nothing to reply.");
 			return;
 		}
 
@@ -74,11 +71,11 @@ export async function handleInbound(env: Env, ctx: InboundContext): Promise<void
 			metadata: {
 				phone: normalized.from,
 				threadId,
-				phoneNumberId,
+				phoneNumberId: senderId,
 			},
 		});
 
-		await sendReply(meta, normalized.from, result.text);
+		await sendReply(transport, normalized.from, result.text);
 
 		await appendTurns(env, threadId, [
 			{
@@ -107,8 +104,8 @@ export async function handleInbound(env: Env, ctx: InboundContext): Promise<void
 	} catch (err) {
 		console.error("pipeline error", err);
 		try {
-			await meta.sendTextMessage(
-				message.from,
+			await transport.sendText(
+				normalized.from,
 				"Desculpe, tive um problema técnico processando sua mensagem. Tente novamente em instantes.",
 			);
 		} catch (sendErr) {

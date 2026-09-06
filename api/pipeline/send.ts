@@ -5,18 +5,20 @@
 // ~1500 chars, falling back to hard-character splits if a single paragraph is
 // itself huge.
 
-import type { MetaApi } from "../services/meta.ts";
+import type { Transport } from "./index.ts";
 
 const SOFT_LIMIT = 1500;
 const HARD_LIMIT = 3800;
 
-export async function sendReply(meta: MetaApi, to: string, text: string): Promise<void> {
+export async function sendReply(transport: Transport, to: string, text: string): Promise<void> {
 	const trimmed = text.trim();
 	if (!trimmed) return;
 
+	// Sequential, not Promise.all: WhatsApp renders messages in arrival order
+	// and a parallel burst can land a later chunk first.
 	const chunks = chunkForWhatsApp(trimmed);
 	for (const chunk of chunks) {
-		await meta.sendTextMessage(to, chunk);
+		await transport.sendText(to, chunk);
 	}
 }
 

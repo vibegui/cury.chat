@@ -12,7 +12,9 @@ import { Hono } from "hono";
 import type { Env } from "../env.ts";
 import { verifyMetaSignature } from "../lib/signature.ts";
 import { alreadyProcessed, markProcessed } from "../pipeline/dedupe.ts";
-import { handleInbound } from "../pipeline/index.ts";
+import { handleInbound, type Transport } from "../pipeline/index.ts";
+import { normalize } from "../pipeline/normalize.ts";
+import { MetaApi } from "../services/meta.ts";
 import type { WebhookPayload } from "../types/whatsapp.ts";
 
 interface Variables {
@@ -66,9 +68,31 @@ webhookRoute.post("/", async (c) => {
 	}
 	await markProcessed(c.env, message.id);
 
+	if (!c.env.META_ACCESS_TOKEN) {
+		console.error("META_ACCESS_TOKEN not set — cannot reply.");
+		return c.text("ok", 200);
+	}
+
+	const meta = new MetaApi({
+		phoneNumberId,
+		accessToken: c.env.META_ACCESS_TOKEN,
+		apiVersion: c.env.META_API_VERSION,
+	});
+	const transport: Transport = {
+		sendText: (to, body) => meta.sendTextMessage(to, body),
+		markRead: (id) => meta.markMessageAsRead(id),
+	};
+
 	// Ack Meta immediately, then process in background. waitUntil keeps the
 	// Worker alive past the response.
-	c.executionCtx.waitUntil(handleInbound(c.env, { message, recipientName, phoneNumberId }));
+	c.executionCtx.waitUntil(
+		handleInbound(c.env, {
+			transport,
+			normalized: normalize(message),
+			recipientName,
+			senderId: phoneNumberId,
+		}),
+	);
 
 	return c.text("ok", 200);
 });

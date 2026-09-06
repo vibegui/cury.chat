@@ -18,7 +18,8 @@
 		"fetch-corpus": "bun run scripts/fetch-corpus.ts",
 		"upload-corpus": "bun run scripts/upload-corpus.ts",
 		"seed-prompt": "bun run scripts/seed-prompt.ts",
-		"configure-webhook": "bun run scripts/configure-webhook.ts"
+		"configure-webhook": "bun run scripts/configure-webhook.ts",
+		"tyxter:setup": "bun run scripts/tyxter-setup.ts"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/ext-apps": "^1.1.2",

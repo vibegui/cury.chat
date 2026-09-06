@@ -18,6 +18,10 @@ export interface Env {
 	META_PHONE_NUMBER_ID: string;
 	META_API_VERSION: string;
 	AUTORAG_INSTANCE: string;
+	// Tyxter Messaging (WhatsApp transport). Environment is selected by the API
+	// key prefix (tx_sandbox_ / tx_live_), not by the URL.
+	TYXTER_API_BASE_URL: string;
+	TYXTER_PHONE_NUMBER_ID: string;
 
 	// ---- Secrets (wrangler secret put / .dev.vars) ----
 	OPENROUTER_API_KEY?: string;
@@ -25,6 +29,10 @@ export interface Env {
 	META_ACCESS_TOKEN?: string;
 	META_APP_SECRET?: string;
 	META_VERIFY_TOKEN?: string;
+	TYXTER_API_KEY?: string;
+	// Returned once by POST /v1/webhook-endpoints. Without it the Tyxter webhook
+	// rejects everything — by design, not as a dev convenience.
+	TYXTER_WEBHOOK_SIGNING_SECRET?: string;
 	// Gate for the /mcp and /test endpoints. If unset, gate is open (dev).
 	// Generate: `openssl rand -hex 32` then `wrangler secret put MCP_AUTH_TOKEN`.
 	MCP_AUTH_TOKEN?: string;
