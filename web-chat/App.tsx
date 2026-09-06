@@ -146,7 +146,7 @@ function ChatView() {
 					sidebarOpen ? "translate-x-0" : "-translate-x-full"
 				} fixed z-30 flex h-dvh w-72 flex-col border-r border-line bg-surface transition-transform md:relative md:translate-x-0`}
 			>
-				<div className="flex items-center justify-between px-4 py-4">
+				<div className="topbar justify-between px-4">
 					<a href="/" className="font-extrabold tracking-tight no-underline text-ink">
 						cury.chat
 					</a>
@@ -181,14 +181,10 @@ function ChatView() {
 						</div>
 					))}
 				</nav>
-
-				<p className="border-t border-line px-4 py-3 text-[11px] leading-snug text-faint">
-					{AI_NOTICE}
-				</p>
 			</aside>
 
 			<main className="flex min-w-0 flex-1 flex-col">
-				<header className="flex items-center gap-3 border-b border-line px-4 py-3">
+				<header className="topbar gap-3 border-b border-line px-4">
 					<button
 						type="button"
 						className="md:hidden text-xl leading-none"
@@ -243,6 +239,7 @@ function ChatView() {
 							Enviar
 						</button>
 					</div>
+					<p className="composer-note">{AI_NOTICE}</p>
 				</form>
 			</main>
 		</div>

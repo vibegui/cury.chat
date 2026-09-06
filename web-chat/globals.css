@@ -89,6 +89,19 @@ a {
 	border-radius: 6px;
 }
 
+/*
+ * The sidebar's brand row and the main header are separate elements in
+ * separate columns, so nothing makes them the same height by default — and at
+ * 56px vs 45px the header rule started 11px off from where the sidebar block
+ * ended, which reads as a broken line. One shared height locks them.
+ */
+.topbar {
+	display: flex;
+	align-items: center;
+	height: 56px;
+	flex-shrink: 0;
+}
+
 /* ---- sidebar ------------------------------------------------------------- */
 
 .btn-new {
@@ -460,6 +473,22 @@ a {
    lines up with the text above it instead of floating at container width. */
 .composer-wrap {
 	border-top: 1px solid var(--line);
-	padding: 4px 16px 16px;
+	padding: 4px 16px 14px;
 	background: var(--canvas);
+}
+
+/*
+ * The AI disclaimer sits under the input, not in the sidebar footer. Two
+ * reasons: it is read where the person is actually looking, and the sidebar
+ * footer's rule could never line up with this one — the composer grows with
+ * the text, so any fixed alignment breaks on the first long message.
+ */
+.composer-note {
+	max-width: 68ch;
+	margin: 8px auto 0;
+	text-align: center;
+	font-size: 11.5px;
+	line-height: 1.45;
+	color: var(--faint);
+	text-wrap: pretty;
 }
