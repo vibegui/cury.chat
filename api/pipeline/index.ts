@@ -75,8 +75,9 @@ export async function handleInbound(env: Env, ctx: InboundContext): Promise<void
 			},
 		});
 
-		await sendReply(transport, normalized.from, result.text);
-
+		// Persistir antes de enviar. Na ordem inversa, uma falha de envio levava o
+		// turno junto: foi assim que seis mensagens sumiram sem deixar registro,
+		// e o que sobrou para diagnosticar foi só a telemetria.
 		await appendTurns(env, threadId, [
 			{
 				role: "user",
@@ -93,6 +94,8 @@ export async function handleInbound(env: Env, ctx: InboundContext): Promise<void
 				citations: result.citationsUsed,
 			},
 		]);
+
+		await sendReply(transport, normalized.from, result.text);
 
 		console.log("turn ok", {
 			threadId,

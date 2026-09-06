@@ -18,6 +18,7 @@
 		"lint": "biome lint --write .",
 		"brand": "bun run scripts/generate-brand.ts",
 		"topics": "bun run scripts/generate-topics.ts",
+		"split-plan": "bun run scripts/split-plan.ts",
 		"fetch-corpus": "bun run scripts/fetch-corpus.ts",
 		"upload-corpus": "bun run scripts/upload-corpus.ts",
 		"seed-prompt": "bun run scripts/seed-prompt.ts",

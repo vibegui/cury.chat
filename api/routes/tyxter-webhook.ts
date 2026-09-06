@@ -49,7 +49,16 @@ tyxterWebhookRoute.post("/", async (c) => {
 
 	// webhook.test probes and delivery-status events land here too. Ack them.
 	if (!isInboundMessageEvent(envelope)) {
-		console.log("tyxter event ignored", { type: envelope.type, id: headers.id });
+		// Um message.received que não casa com o formato esperado deveria ter
+		// virado resposta e não virou — isso não pode passar em silêncio. Loga a
+		// forma (as chaves), nunca o conteúdo: telefone e texto da pergunta não
+		// vão para log, pela mesma razão que não vão para a telemetria.
+		const unexpected = envelope.type === "message.received";
+		console[unexpected ? "warn" : "log"]("tyxter event ignored", {
+			type: envelope.type,
+			id: headers.id,
+			...(unexpected ? { shape: Object.keys(envelope as object) } : {}),
+		});
 		return c.text("ok", 200);
 	}
 
@@ -67,6 +76,12 @@ tyxterWebhookRoute.post("/", async (c) => {
 	// surfaces as an explicit empty id. It is not a usable recipient, so there is
 	// nobody to reply to.
 	const normalized = normalizeTyxter(envelope.data);
+	if (!normalized.content.trim()) {
+		console.warn("tyxter inbound sem texto após normalizar", {
+			id: headers.id,
+			contentType: envelope.data.content?.type,
+		});
+	}
 	if (!normalized.from) {
 		console.warn("Inbound with unresolved sender — cannot reply.", dedupeKey);
 		return c.text("ok", 200);
