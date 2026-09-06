@@ -1,0 +1,93 @@
+name = "cury-mcp"
+main = "api/main.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Non-secret config. Fill in your own account/gateway IDs.
+# Secrets go via `wrangler secret put NAME` (see docs/deploy.md):
+#   META_ACCESS_TOKEN         — WhatsApp Business permanent access token
+#   META_APP_SECRET           — Meta App secret (for x-hub-signature-256 verification)
+#   META_VERIFY_TOKEN         — arbitrary string you choose; paste the same into Meta's webhook config
+#   TYXTER_API_KEY            — Tyxter API key; prefix selects the environment
+#   TYXTER_WEBHOOK_SIGNING_SECRET
+#                             — returned once by POST /v1/webhook-endpoints
+#                               (bun run tyxter:setup prints it)
+#
+# Optional secrets (only set when applicable):
+#   OPENROUTER_API_KEY        — only if you DON'T have BYOK configured in the AI
+#                               Gateway dashboard. With BYOK on, the Gateway
+#                               injects the provider key server-side and the
+#                               Worker doesn't need its own.
+#   CF_AI_GATEWAY_TOKEN       — only if your Gateway has "Authenticated Gateway"
+#                               turned on.
+[vars]
+# Cloudflare account id (from `wrangler whoami`).
+AI_GATEWAY_ACCOUNT_ID = "55dd6d847f366735ef6e0f860c7bdc51"
+# AI Gateway name. "default" is the gateway that already exists on this account.
+AI_GATEWAY_NAME = "default"
+# LLM routing.
+#   LLM_PROVIDER = "compat"      — unified billing via /compat (default; uses
+#                                  AI Gateway credit balance). Set
+#                                  CF_AI_GATEWAY_TOKEN secret.
+#                = "openrouter"  — per-provider path via /openrouter. Either
+#                                  set OPENROUTER_API_KEY secret or configure
+#                                  BYOK in the Gateway dashboard.
+# LLM_MODEL uses the slug the chosen provider expects:
+#   compat:     "google-ai-studio/gemini-2.5-flash", "anthropic/claude-...",
+#               "openai/gpt-4o-mini", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+#   openrouter: "google/gemini-3.5-flash", "anthropic/claude-sonnet-4-6", etc.
+LLM_PROVIDER = "openrouter"
+LLM_MODEL = "deepseek/deepseek-v4-flash"
+# WhatsApp Business phone number id (Meta Business Manager → WhatsApp → API Setup).
+# Set this once you've bound your number — also keep it in .dev.vars so the
+# configure-webhook script can find it.
+META_PHONE_NUMBER_ID = ""
+META_API_VERSION = "v23.0"
+# AutoRAG instance name. Create in dashboard (AI → AutoRAG → New) pointing at
+# the cury-corpus R2 bucket, then paste the name here. Empty = RAG off.
+AUTORAG_INSTANCE = "cury"
+# Tyxter Messaging — brokered WhatsApp transport. One base URL for both
+# environments; the API key prefix (tx_sandbox_ / tx_live_) picks which one.
+# TYXTER_PHONE_NUMBER_ID is the Tyxter id from GET /v1/phone-numbers.
+TYXTER_API_BASE_URL = "https://api.tyxter.com"
+TYXTER_PHONE_NUMBER_ID = ""  # preencher após provisionar + Embedded Signup
+
+# Workers AI binding — used for Whisper transcription if you enable inbound voice notes.
+[ai]
+binding = "AI"
+
+# Per-message-id dedupe (24h TTL) so retries from Meta don't double-reply.
+[[kv_namespaces]]
+binding = "DEDUPE"
+id = "85dda98a57ba4d72b89766a225221561"
+
+# Conversation thread store: one key per ${from}:${YYYY-MM-DD} → array of turns.
+[[kv_namespaces]]
+binding = "THREADS"
+id = "eb6e2232351b4500ba83aa5201012caa"
+
+# Config store: live-edited values like the active system prompt override.
+[[kv_namespaces]]
+binding = "CONFIG"
+id = "9b03f9469efb42729eca51d87555f653"
+
+# R2 bucket holding the knowledge corpus (markdown). AutoRAG reads from here.
+[[r2_buckets]]
+binding = "CORPUS"
+bucket_name = "cury-corpus"
+
+# AI Search (AutoRAG) binding. Lets the Worker call env.AUTORAG.search(...)
+# directly — no separate API token, no REST roundtrip.
+[[ai_search]]
+binding = "AUTORAG"
+instance_name = "cury"
+
+# Allow importing the bundled system prompt + the per-resource HTML bundles
+# as strings at build time. The web UI build (vite) writes to dist/web/.
+[[rules]]
+type = "Text"
+globs = ["**/*.md", "dist/web/*.html", "dist/chat/*.html", "landing/*.html", "landing/*.txt"]
+fallthrough = true
+
+[observability]
+enabled = true

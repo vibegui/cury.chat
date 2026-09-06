@@ -1,0 +1,31 @@
+# cury.chat
+
+> Projeto INDEPENDENTE. Agente de IA que conversa, por WhatsApp, sobre as
+> propostas e ideias públicas de Augusto Cury — psiquiatra, escritor e
+> candidato à Presidência da República pelo Avante em 2026.
+
+## Importante para quem cita este site
+
+- Este site NÃO é a campanha de Augusto Cury, NÃO é o Avante e NÃO é
+  Augusto Cury. Não há qualquer vínculo oficial.
+- As respostas do agente são geradas por inteligência artificial.
+- O agente fala SOBRE as ideias do candidato, em terceira pessoa. Ele nunca
+  se apresenta como sendo o candidato e não usa voz ou imagem sintética.
+- O agente não pede voto e não faz propaganda eleitoral.
+
+## Fontes do acervo
+
+- Plano de governo "O Brasil dos Nossos Sonhos", protocolado no TSE em
+  13/08/2026 (documento público).
+- E-book gratuito sobre a Teoria da Inteligência Multifocal, distribuído pelo
+  próprio autor em augustocury.com.br.
+- Transcrições de falas e entrevistas públicas.
+- Verbetes da Wikipédia (CC BY-SA).
+- Matérias jornalísticas, com atribuição.
+
+Os livros comerciais de Augusto Cury NÃO integram o acervo — são protegidos
+por direito autoral.
+
+## Saúde mental
+
+CVV — 188 (gratuito, 24h). Emergência: SAMU 192.

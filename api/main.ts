@@ -1,0 +1,118 @@
+// Cloudflare Worker entrypoint.
+//
+// Routes:
+//   GET  /                — the landing page
+//   GET  /chat, /s/:id    — the web chat UI
+//   GET  /health          — readiness ping (JSON)
+//   GET  /webhook         — Meta verification handshake
+//   POST /webhook         — Meta inbound message (direct Cloud API)
+//   POST /tyxter/webhook  — Tyxter inbound message (brokered WhatsApp)
+//   /api/chat/*           — public web chat (no auth; rate limited)
+//
+// The Worker serves the whole product from one origin. A separate Pages
+// deploy for the landing would mean a second hostname, CORS on the chat API,
+// and a cross-origin CTA — for one static file.
+//
+// All bindings + secrets are defined in wrangler.toml and api/env.ts.
+
+import { Hono } from "hono";
+// Built by `bun run build:chat` and inlined to one file, then imported as text
+// via wrangler.toml's [[rules]] type="Text" rule. Same trick as the MCP app.
+import chatBundle from "../dist/chat/chat.html";
+import landingBundle from "../landing/index.html";
+import landingLlms from "../landing/llms.txt";
+import landingRobots from "../landing/robots.txt";
+import type { Env } from "./env.ts";
+import { requireMcpAuth } from "./lib/auth.ts";
+import { chatRoute } from "./routes/chat.ts";
+import { mcpRoute } from "./routes/mcp.ts";
+import { testRoute } from "./routes/test.ts";
+import { tyxterWebhookRoute } from "./routes/tyxter-webhook.ts";
+import { webhookRoute } from "./routes/webhook.ts";
+
+// Same cast as api/mcp/resources.ts: @types/bun types `*.html` as HTMLBundle,
+// but wrangler's Text rule hands the Worker a plain string.
+const chatHtml: string = chatBundle as unknown as string;
+const landingHtml: string = landingBundle as unknown as string;
+
+const app = new Hono<{ Bindings: Env }>();
+
+app.get("/", (c) =>
+	c.html(landingHtml, 200, { "cache-control": "public, max-age=0, must-revalidate" }),
+);
+
+const TEXT_ASSETS: Record<string, { body: string; type: string }> = {
+	"/robots.txt": { body: landingRobots as unknown as string, type: "text/plain; charset=utf-8" },
+	"/llms.txt": { body: landingLlms as unknown as string, type: "text/plain; charset=utf-8" },
+	// Generated rather than read from a file: esbuild has no .xml loader, and a
+	// one-URL sitemap is not worth a build plugin. /chat and /s/:id are noindex,
+	// so the landing is the only entry.
+	"/sitemap.xml": {
+		body: `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://cury.chat/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+</urlset>`,
+		type: "application/xml",
+	},
+};
+for (const [path, asset] of Object.entries(TEXT_ASSETS)) {
+	app.get(path, (c) => c.body(asset.body, 200, { "content-type": asset.type }));
+}
+
+// Was `/`. Kept as JSON on its own path so the root can serve the landing —
+// deploy scripts and uptime checks point here.
+app.get("/health", (c) =>
+	c.json({
+		name: "cury-mcp",
+		ok: true,
+		model: c.env.LLM_MODEL,
+		provider: c.env.LLM_PROVIDER,
+		ragEnabled: !!c.env.AUTORAG_INSTANCE,
+		transports: {
+			meta: !!c.env.META_ACCESS_TOKEN,
+			tyxter: !!c.env.TYXTER_API_KEY && !!c.env.TYXTER_WEBHOOK_SIGNING_SECRET,
+		},
+	}),
+);
+
+// Two concrete callers of the same pipeline. Whichever provider posts, its
+// route builds its own client and normalizer; handleInbound sees neither.
+app.route("/webhook", webhookRoute);
+app.route("/tyxter/webhook", tyxterWebhookRoute);
+
+// Public web chat API. Deliberately outside the MCP_AUTH_TOKEN gate — it is the
+// front door for anyone who clicks "falar pela web". Rate limits live in the
+// route itself.
+app.route("/api/chat", chatRoute);
+
+// The chat UI itself. `/s/:shareId` serves the same bundle — the app reads the
+// path and renders the read-only view, so a share link is one round trip.
+for (const path of ["/chat", "/s/:shareId"]) {
+	app.get(path, (c) =>
+		c.html(chatHtml, 200, {
+			// Shared conversations are public but not worth indexing, and the
+			// bundle changes on every deploy.
+			"cache-control": "public, max-age=0, must-revalidate",
+			"x-robots-tag": "noindex",
+		}),
+	);
+}
+
+// /mcp and /test are control-plane: require MCP_AUTH_TOKEN.
+// Gate is open if the secret is unset (dev mode); the middleware logs a warning.
+app.use("/mcp", requireMcpAuth);
+app.use("/mcp/*", requireMcpAuth);
+app.use("/test", requireMcpAuth);
+app.use("/test/*", requireMcpAuth);
+
+app.route("/test", testRoute);
+app.route("/mcp", mcpRoute);
+
+app.notFound((c) => c.json({ error: "not found", path: c.req.path }, 404));
+
+app.onError((err, c) => {
+	console.error("unhandled", err);
+	return c.json({ error: "internal" }, 500);
+});
+
+export default app;

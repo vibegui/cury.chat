@@ -1,0 +1,5 @@
+{
+	"name": "Cury Chat",
+	"description": "Projeto independente. Chat sobre as ideias e propostas públicas de Augusto Cury, ancorado em fontes públicas.",
+	"systemPrompt": "./prompts/cury-chat.md"
+}
