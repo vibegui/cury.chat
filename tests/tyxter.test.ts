@@ -3,6 +3,7 @@ import { readTyxterSignatureHeaders, verifyTyxterSignature } from "../api/lib/ty
 import {
 	isInboundMessageEvent,
 	normalizeTyxter,
+	toE164,
 	type TyxterInboundData,
 } from "../api/pipeline/normalize-tyxter.ts";
 
@@ -197,5 +198,34 @@ describe("isInboundMessageEvent", () => {
 		expect(isInboundMessageEvent({ type: "webhook.test" })).toBe(false);
 		expect(isInboundMessageEvent({ type: "message.failed" })).toBe(false);
 		expect(isInboundMessageEvent(undefined)).toBe(false);
+	});
+});
+
+describe("toE164", () => {
+	test("prefixa o + que o webhook não manda", () => {
+		// Medido contra a API: sem o +, a Tyxter não reconhece a janela de 24h e
+		// devolve service_window_required. Foi o que deixou o bot mudo.
+		expect(toE164("5521988447814")).toBe("+5521988447814");
+	});
+
+	test("não duplica quando já vem certo", () => {
+		expect(toE164("+5521988447814")).toBe("+5521988447814");
+	});
+
+	test("deixa em paz o que não é telefone", () => {
+		// O remetente pode vir vazio quando o Meta oculta a identidade, e ids
+		// opacos de sandbox não são números.
+		expect(toE164("")).toBe("");
+		expect(toE164("mock_phone_abc")).toBe("mock_phone_abc");
+	});
+
+	test("normalizeTyxter aplica em quem escreveu", () => {
+		const out = normalizeTyxter({
+			message_id: "msg_1",
+			sender: { type: "phone_e164", id: "5521988447814" },
+			recipient: { type: "whatsapp_phone_number", id: "pn_1" },
+			content: { type: "text", text: { body: "oi" } },
+		});
+		expect(out.from).toBe("+5521988447814");
 	});
 });

@@ -26,7 +26,24 @@ async function main() {
 		process.exit(1);
 	}
 
-	const files = (await readdir(CORPUS_DIR)).filter((f) => f.endsWith(".md")).sort();
+	// O plano inteiro fica em corpus/ como fonte da fatia, mas o que sobe são as
+	// seções de corpus/plano/. Enviar os dois faria o plano competir consigo
+	// mesmo no índice, e o arquivo de 320 KB é justamente o que perde para
+	// legendas de YouTube em pergunta coloquial — ver scripts/split-plan.ts.
+	const PLAN_SOURCE = "01. Plano de Governo";
+	const root = (await readdir(CORPUS_DIR))
+		.filter((f) => f.endsWith(".md") && !f.startsWith(PLAN_SOURCE))
+		.map((f) => ({ name: f, path: join(CORPUS_DIR, f) }));
+
+	const planDir = join(CORPUS_DIR, "plano");
+	const planned = (await stat(planDir).catch(() => null))?.isDirectory()
+		? (await readdir(planDir))
+				.filter((f) => f.endsWith(".md"))
+				.map((f) => ({ name: f, path: join(planDir, f) }))
+		: [];
+
+	const entries = [...root, ...planned].sort((a, b) => a.name.localeCompare(b.name));
+	const files = entries.map((e) => e.name);
 	if (files.length === 0) {
 		console.error("No .md files in corpus/.");
 		process.exit(1);
@@ -34,8 +51,7 @@ async function main() {
 
 	console.log(`Uploading ${files.length} files to r2://${BUCKET}/ …`);
 
-	for (const file of files) {
-		const path = join(CORPUS_DIR, file);
+	for (const { name: file, path } of entries) {
 		const buf = await readFile(path);
 		const hash = createHash("sha256").update(buf).digest("hex").slice(0, 12);
 		const cmd = `wrangler r2 object put "${BUCKET}/${file}" --file "${path}" --content-type "text/markdown" ${remote}`;
