@@ -131,7 +131,7 @@ function ChatView() {
 	}
 
 	return (
-		<div className="flex h-dvh bg-[--bg] text-[--ink]">
+		<div className="flex h-dvh bg-canvas text-ink">
 			{sidebarOpen && (
 				<button
 					type="button"
@@ -144,13 +144,13 @@ function ChatView() {
 			<aside
 				className={`${
 					sidebarOpen ? "translate-x-0" : "-translate-x-full"
-				} fixed z-30 flex h-dvh w-72 flex-col border-r border-[--line] bg-[--surface] transition-transform md:relative md:translate-x-0`}
+				} fixed z-30 flex h-dvh w-72 flex-col border-r border-line bg-surface transition-transform md:relative md:translate-x-0`}
 			>
 				<div className="flex items-center justify-between px-4 py-4">
-					<a href="/" className="font-extrabold tracking-tight no-underline text-[--ink]">
+					<a href="/" className="font-extrabold tracking-tight no-underline text-ink">
 						cury.chat
 					</a>
-					<span className="text-[11px] font-semibold uppercase tracking-wider text-[--faint]">
+					<span className="text-[11px] font-semibold uppercase tracking-wider text-faint">
 						independente
 					</span>
 				</div>
@@ -163,7 +163,7 @@ function ChatView() {
 
 				<nav className="mt-3 flex-1 overflow-y-auto px-2 pb-4">
 					{conversations.length === 0 && (
-						<p className="px-2 py-6 text-sm text-[--faint]">Nenhuma conversa ainda.</p>
+						<p className="px-2 py-6 text-sm text-faint">Nenhuma conversa ainda.</p>
 					)}
 					{conversations.map((c) => (
 						<div key={c.id} className={`thread-row ${c.id === activeId ? "is-active" : ""}`}>
@@ -182,13 +182,13 @@ function ChatView() {
 					))}
 				</nav>
 
-				<p className="border-t border-[--line] px-4 py-3 text-[11px] leading-snug text-[--faint]">
+				<p className="border-t border-line px-4 py-3 text-[11px] leading-snug text-faint">
 					{AI_NOTICE}
 				</p>
 			</aside>
 
 			<main className="flex min-w-0 flex-1 flex-col">
-				<header className="flex items-center gap-3 border-b border-[--line] px-4 py-3">
+				<header className="flex items-center gap-3 border-b border-line px-4 py-3">
 					<button
 						type="button"
 						className="md:hidden text-xl leading-none"
@@ -223,24 +223,26 @@ function ChatView() {
 
 				{error && <div className="notice notice-error">{error}</div>}
 
-				<form onSubmit={submit} className="composer">
-					<textarea
-						value={draft}
-						onChange={(e) => setDraft(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" && !e.shiftKey) {
-								e.preventDefault();
-								submit(e as unknown as React.FormEvent);
-							}
-						}}
-						rows={1}
-						maxLength={2000}
-						placeholder="Pergunte sobre as propostas de Augusto Cury…"
-						className="composer-input"
-					/>
-					<button type="submit" disabled={pending || !draft.trim()} className="btn-send">
-						{pending ? "…" : "Enviar"}
-					</button>
+				<form onSubmit={submit} className="composer-wrap">
+					<div className="composer">
+						<textarea
+							value={draft}
+							onChange={(e) => setDraft(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" && !e.shiftKey) {
+									e.preventDefault();
+									submit(e as unknown as React.FormEvent);
+								}
+							}}
+							rows={1}
+							maxLength={2000}
+							placeholder="Pergunte sobre as propostas de Augusto Cury…"
+							className="composer-input"
+						/>
+						<button type="submit" disabled={pending || !draft.trim()} className="btn-send">
+							Enviar
+						</button>
+					</div>
 				</form>
 			</main>
 		</div>
@@ -280,17 +282,20 @@ function Messages({
 
 	if (turns.length === 0 && !readOnly) {
 		return (
-			<div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
-				<div>
-					<h2 className="text-2xl font-extrabold tracking-tight">
+			/* min-w-0 on both the column and the text block: a flex item defaults
+			   to min-width:auto, so without it the longest heading line sets the
+			   container width and the whole page overflows on a phone. */
+			<div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-6 px-5 text-center">
+				<div className="min-w-0 max-w-md">
+					<h2 className="text-balance text-2xl font-extrabold tracking-tight">
 						Pergunte o que Augusto Cury propõe
 					</h2>
-					<p className="mx-auto mt-2 max-w-md text-sm text-[--ink-soft]">
+					<p className="mt-2 text-pretty text-sm text-ink-soft">
 						Respostas ancoradas no plano de governo protocolado no TSE e em outros materiais
 						públicos. Cada resposta diz de onde saiu.
 					</p>
 				</div>
-				<div className="grid w-full max-w-lg gap-2 sm:grid-cols-2">
+				<div className="grid w-full min-w-0 max-w-lg gap-2 sm:grid-cols-2">
 					{SUGGESTIONS.map((q) => (
 						<button key={q} type="button" className="suggestion" onClick={() => onPick?.(q)}>
 							{q}
@@ -307,7 +312,13 @@ function Messages({
 				{turns.map((t, i) => (
 					<Bubble key={`${t.ts}-${i}`} turn={t} streaming={streaming && i === turns.length - 1} />
 				))}
-				{pending && <div className="typing">Consultando as fontes…</div>}
+				{pending && (
+					<div className="typing" role="status" aria-label="Consultando as fontes">
+						<span />
+						<span />
+						<span />
+					</div>
+				)}
 				<div ref={bottom} />
 			</div>
 		</div>
@@ -315,25 +326,34 @@ function Messages({
 }
 
 function Bubble({ turn, streaming }: { turn: Turn; streaming?: boolean }) {
-	const isUser = turn.role === "user";
-	const sources = [...new Set((turn.citations ?? []).map((c) => c.source))].slice(0, 4);
+	if (turn.role === "user") {
+		return (
+			<div className="msg-user">
+				<div className="bubble-user">{renderMarkdownish(turn.content)}</div>
+			</div>
+		);
+	}
+
+	const sources = [...new Set((turn.citations ?? []).map((c) => c.source))];
 
 	return (
-		<div className={isUser ? "row-user" : "row-bot"}>
-			<div className={isUser ? "bubble-user" : "bubble-bot"}>
-				{renderMarkdownish(turn.content)}
-				{streaming && !isUser && <span className="caret" />}
-				{sources.length > 0 && (
-					<div className="sources">
-						<span>Fontes:</span>
+		<div className="msg-bot">
+			{renderMarkdownish(turn.content)}
+			{streaming && <span className="caret" />}
+			{sources.length > 0 && (
+				<details className="sources">
+					<summary>
+						{sources.length} {sources.length === 1 ? "fonte" : "fontes"}
+					</summary>
+					<div className="source-list">
 						{sources.map((s) => (
 							<span key={s} className="chip">
 								{s}
 							</span>
 						))}
 					</div>
-				)}
-			</div>
+				</details>
+			)}
 		</div>
 	);
 }
@@ -374,13 +394,13 @@ function SharedView({ shareId }: { shareId: string }) {
 	}, [shareId]);
 
 	if (state.status === "loading") {
-		return <div className="p-10 text-center text-sm text-[--faint]">Carregando…</div>;
+		return <div className="p-10 text-center text-sm text-faint">Carregando…</div>;
 	}
 	if (state.status === "gone") {
 		return (
 			<div className="p-10 text-center">
 				<h1 className="text-xl font-bold">Conversa não encontrada</h1>
-				<p className="mt-2 text-sm text-[--ink-soft]">
+				<p className="mt-2 text-sm text-ink-soft">
 					O link pode ter expirado. <a href="/chat">Começar uma conversa</a>
 				</p>
 			</div>
@@ -388,21 +408,21 @@ function SharedView({ shareId }: { shareId: string }) {
 	}
 
 	return (
-		<div className="flex h-dvh flex-col bg-[--bg] text-[--ink]">
-			<header className="border-b border-[--line] px-4 py-3">
+		<div className="flex h-dvh flex-col bg-canvas text-ink">
+			<header className="border-b border-line px-4 py-3">
 				<div className="mx-auto flex max-w-2xl items-center gap-3">
-					<a href="/" className="font-extrabold tracking-tight no-underline text-[--ink]">
+					<a href="/" className="font-extrabold tracking-tight no-underline text-ink">
 						cury.chat
 					</a>
 					<span className="badge-ro">somente leitura</span>
-					<h1 className="min-w-0 flex-1 truncate text-sm text-[--ink-soft]">{state.title}</h1>
+					<h1 className="min-w-0 flex-1 truncate text-sm text-ink-soft">{state.title}</h1>
 				</div>
 			</header>
 
 			<Messages turns={state.turns} readOnly />
 
-			<footer className="border-t border-[--line] px-4 py-4 text-center">
-				<p className="mx-auto max-w-2xl text-xs text-[--faint]">{AI_NOTICE}</p>
+			<footer className="border-t border-line px-4 py-4 text-center">
+				<p className="mx-auto max-w-2xl text-xs text-faint">{AI_NOTICE}</p>
 				<a href="/chat" className="btn-cta mt-3">
 					Fazer minhas perguntas
 				</a>

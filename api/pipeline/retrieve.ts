@@ -106,7 +106,8 @@ export function formatCitationsBlock(citations: Citation[]): string {
 	});
 	return [
 		"<context>",
-		"Passagens recuperadas de materiais públicos sobre Augusto Cury (plano de governo, e-books gratuitos, falas e entrevistas). Cite-as pela fonte quando relevante:",
+		"Passagens recuperadas de materiais públicos sobre Augusto Cury (plano de governo, e-books gratuitos, falas e entrevistas).",
+		"Os números [1], [2], … são apenas para organizar este bloco: NUNCA os escreva na resposta — quem lê não os vê. Quando citar, use o nome da fonte entre parênteses.",
 		"",
 		lines.join("\n\n"),
 		"</context>",
