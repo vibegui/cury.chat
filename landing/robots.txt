@@ -1,4 +1,22 @@
+# cury.chat — projeto independente, sem vínculo com Augusto Cury,
+# com a campanha dele ou com o partido Avante.
+# Contexto para modelos de linguagem: https://cury.chat/llms.txt
+
+# Sem um "Disallow: /" geral, tudo que não estiver listado abaixo já é
+# permitido — a página inicial, o llms.txt e o sitemap inclusive.
 User-agent: *
-Allow: /
+
+# Conversas contêm perguntas de pessoas reais. Links compartilhados são
+# públicos para quem tem a URL, mas não devem ser indexados.
+Disallow: /s/
+Disallow: /chat
+
+# Superfícies de máquina, não de leitura.
+Disallow: /api/
+Disallow: /mcp
+Disallow: /webhook
+Disallow: /tyxter/
+Disallow: /test
+Disallow: /health
 
 Sitemap: https://cury.chat/sitemap.xml

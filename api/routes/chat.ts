@@ -27,6 +27,15 @@ import { runTurn, runTurnStream } from "../pipeline/turn.ts";
 
 export const chatRoute = new Hono<{ Bindings: Env }>();
 
+// Conversation data is per-session and changes every turn. The shell that
+// loads it is cached; this must never be.
+chatRoute.use("*", async (c, next) => {
+	await next();
+	if (!c.res.headers.has("cache-control")) {
+		c.res.headers.set("cache-control", "no-store");
+	}
+});
+
 const MAX_MESSAGE_CHARS = 2000;
 const SEND_LIMIT = 20; // messages
 const SEND_WINDOW_SECONDS = 60 * 5;

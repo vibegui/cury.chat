@@ -24,6 +24,7 @@ import landingLlms from "../landing/llms.txt";
 import landingRobots from "../landing/robots.txt";
 import type { Env } from "./env.ts";
 import { requireMcpAuth } from "./lib/auth.ts";
+import { CACHE_PAGE, CACHE_TEXT, serveStatic, staticAsset } from "./lib/static-asset.ts";
 import { chatRoute } from "./routes/chat.ts";
 import { mcpRoute } from "./routes/mcp.ts";
 import { testRoute } from "./routes/test.ts";
@@ -37,9 +38,8 @@ const landingHtml: string = landingBundle as unknown as string;
 
 const app = new Hono<{ Bindings: Env }>();
 
-app.get("/", (c) =>
-	c.html(landingHtml, 200, { "cache-control": "public, max-age=0, must-revalidate" }),
-);
+const LANDING = staticAsset(landingHtml, "text/html; charset=utf-8", CACHE_PAGE);
+app.get("/", (c) => serveStatic(LANDING, c.req.header("if-none-match")));
 
 const TEXT_ASSETS: Record<string, { body: string; type: string }> = {
 	"/robots.txt": { body: landingRobots as unknown as string, type: "text/plain; charset=utf-8" },
@@ -55,8 +55,9 @@ const TEXT_ASSETS: Record<string, { body: string; type: string }> = {
 		type: "application/xml",
 	},
 };
-for (const [path, asset] of Object.entries(TEXT_ASSETS)) {
-	app.get(path, (c) => c.body(asset.body, 200, { "content-type": asset.type }));
+for (const [path, { body, type }] of Object.entries(TEXT_ASSETS)) {
+	const built = staticAsset(body, type, CACHE_TEXT);
+	app.get(path, (c) => serveStatic(built, c.req.header("if-none-match")));
 }
 
 // Was `/`. Kept as JSON on its own path so the root can serve the landing —
@@ -87,15 +88,16 @@ app.route("/api/chat", chatRoute);
 
 // The chat UI itself. `/s/:shareId` serves the same bundle — the app reads the
 // path and renders the read-only view, so a share link is one round trip.
+// Both routes serve the same bundle; the app reads the path at runtime. Only
+// the shell is cached — the conversation itself comes from /api/chat, which
+// never is.
+const CHAT_SHELL = staticAsset(chatHtml, "text/html; charset=utf-8", CACHE_PAGE);
 for (const path of ["/chat", "/s/:shareId"]) {
-	app.get(path, (c) =>
-		c.html(chatHtml, 200, {
-			// Shared conversations are public but not worth indexing, and the
-			// bundle changes on every deploy.
-			"cache-control": "public, max-age=0, must-revalidate",
-			"x-robots-tag": "noindex",
-		}),
-	);
+	app.get(path, (c) => {
+		const res = serveStatic(CHAT_SHELL, c.req.header("if-none-match"));
+		res.headers.set("x-robots-tag", "noindex");
+		return res;
+	});
 }
 
 // /mcp and /test are control-plane: require MCP_AUTH_TOKEN.
