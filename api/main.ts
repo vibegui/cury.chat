@@ -28,12 +28,14 @@ import landingBundle from "../landing/index.html";
 import ogImage from "../landing/og.png";
 import landingLlms from "../landing/llms.txt";
 import landingRobots from "../landing/robots.txt";
+import { STYLES } from "../landing/styles.ts";
 import type { Env } from "./env.ts";
 import { requireMcpAuth } from "./lib/auth.ts";
 import { CACHE_PAGE, CACHE_TEXT, serveStatic, staticAsset } from "./lib/static-asset.ts";
 import { chatRoute } from "./routes/chat.ts";
 import { mcpRoute } from "./routes/mcp.ts";
 import { testRoute } from "./routes/test.ts";
+import { publishedTopics, topicsRoute } from "./routes/topics.ts";
 import { tyxterWebhookRoute } from "./routes/tyxter-webhook.ts";
 import { webhookRoute } from "./routes/webhook.ts";
 
@@ -68,6 +70,7 @@ app.get("/", (c) => serveStatic(LANDING, c.req.header("if-none-match")));
 const TEXT_ASSETS: Record<string, { body: string; type: string }> = {
 	"/robots.txt": { body: landingRobots as unknown as string, type: "text/plain; charset=utf-8" },
 	"/llms.txt": { body: landingLlms as unknown as string, type: "text/plain; charset=utf-8" },
+	"/styles.css": { body: STYLES, type: "text/css; charset=utf-8" },
 	// Generated rather than read from a file: esbuild has no .xml loader, and a
 	// one-URL sitemap is not worth a build plugin. /chat and /s/:id are noindex,
 	// so the landing is the only entry.
@@ -75,6 +78,13 @@ const TEXT_ASSETS: Record<string, { body: string; type: string }> = {
 		body: `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://cury.chat/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://cury.chat/temas</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+${publishedTopics()
+	.map(
+		(t) =>
+			`  <url><loc>https://cury.chat/tema/${t.slug}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`,
+	)
+	.join("\n")}
 </urlset>`,
 		type: "application/xml",
 	},
@@ -137,6 +147,7 @@ app.route("/tyxter/webhook", tyxterWebhookRoute);
 // Public web chat API. Deliberately outside the MCP_AUTH_TOKEN gate — it is the
 // front door for anyone who clicks "falar pela web". Rate limits live in the
 // route itself.
+app.route("/", topicsRoute);
 app.route("/api/chat", chatRoute);
 
 // The chat UI itself. `/s/:shareId` serves the same bundle — the app reads the

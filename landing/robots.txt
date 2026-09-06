@@ -6,6 +6,9 @@
 # permitido — a página inicial, o llms.txt e o sitemap inclusive.
 User-agent: *
 
+# As páginas de assunto (/temas, /tema/*) são o conteúdo indexável do site e
+# não estão listadas aqui — sem um "Disallow: /" geral, já são permitidas.
+
 # Conversas contêm perguntas de pessoas reais. Links compartilhados são
 # públicos para quem tem a URL, mas não devem ser indexados.
 Disallow: /s/

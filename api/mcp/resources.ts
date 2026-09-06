@@ -58,6 +58,18 @@ export const RESOURCES: ResourceDef[] = [
 		description: "Compact runtime health and config view.",
 	},
 	{
+		// export_threads_html sempre apontou para este recurso, mas ele nunca foi
+		// declarado — a view existia em web/ e o studio não tinha o que abrir.
+		uri: "ui://cury/export-result",
+		name: "Export",
+		description: "Result of an HTML conversation export.",
+	},
+	{
+		uri: "ui://cury/analytics",
+		name: "Analytics",
+		description: "Usage by state, topic and channel.",
+	},
+	{
 		uri: "ui://cury/admin",
 		name: "Admin",
 		description: "Main admin canvas — status, activity, costs, quick actions.",

@@ -18,7 +18,11 @@ function ChatView() {
 	const [conversations, setConversations] = useState<ConversationMeta[]>([]);
 	const [activeId, setActiveId] = useState<string | undefined>();
 	const [turns, setTurns] = useState<Turn[]>([]);
-	const [draft, setDraft] = useState("");
+	// `/chat?q=…` vem das páginas de tópico: a pergunta já chega escrita, mas
+	// não é enviada sozinha — quem aperta enviar é a pessoa.
+	const [draft, setDraft] = useState(
+		() => new URLSearchParams(window.location.search).get("q")?.slice(0, 2000) ?? "",
+	);
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,6 +33,11 @@ function ChatView() {
 			.listConversations()
 			.then(setConversations)
 			.catch(() => {});
+		// Tira o ?q= da barra de endereço depois de usar, senão recarregar a
+		// página ressuscita a pergunta por cima do que a pessoa estiver escrevendo.
+		if (window.location.search) {
+			window.history.replaceState(null, "", window.location.pathname);
+		}
 	}, []);
 
 	const openConversation = useCallback(async (id: string) => {

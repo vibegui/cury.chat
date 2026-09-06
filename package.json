@@ -17,6 +17,7 @@
 		"fmt": "biome format --write .",
 		"lint": "biome lint --write .",
 		"brand": "bun run scripts/generate-brand.ts",
+		"topics": "bun run scripts/generate-topics.ts",
 		"fetch-corpus": "bun run scripts/fetch-corpus.ts",
 		"upload-corpus": "bun run scripts/upload-corpus.ts",
 		"seed-prompt": "bun run scripts/seed-prompt.ts",
