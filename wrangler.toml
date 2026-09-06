@@ -54,7 +54,7 @@ AUTORAG_INSTANCE = "cury"
 # produces links that outlive nobody's memory of which host was which.
 PUBLIC_BASE_URL = "https://cury.chat"
 TYXTER_API_BASE_URL = "https://api.tyxter.com"
-TYXTER_PHONE_NUMBER_ID = ""  # preencher após provisionar + Embedded Signup
+TYXTER_PHONE_NUMBER_ID = "cmtqa5qpm004d01pqk8ghtds6"
 
 # Workers AI binding — used for Whisper transcription if you enable inbound voice notes.
 [ai]

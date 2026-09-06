@@ -80,6 +80,11 @@ export const STYLES = String.raw`/* Compartilhado pela landing e pelas páginas 
     transition: transform 150ms var(--ease);
   }
   .cta:hover { transform: translateY(-1px); }
+  .cta-secondary {
+    background: transparent; color: var(--accent);
+    border: 1px solid var(--line);
+  }
+  .cta-secondary:hover { background: var(--accent-soft); }
   .cta-soon {
     display: inline-flex; align-items: center; gap: 9px;
     background: transparent; color: var(--faint);
