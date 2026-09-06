@@ -23,7 +23,7 @@ import {
 	webThreadId,
 } from "../pipeline/conversations.ts";
 import { loadThread } from "../pipeline/persist.ts";
-import { runTurn } from "../pipeline/turn.ts";
+import { runTurn, runTurnStream } from "../pipeline/turn.ts";
 
 export const chatRoute = new Hono<{ Bindings: Env }>();
 
@@ -153,6 +153,91 @@ chatRoute.post("/send", async (c) => {
 		reply: result.reply,
 		citations: result.citations.map((x) => ({ source: x.source, score: x.score })),
 		model: result.model,
+	});
+});
+
+/**
+ * Streaming twin of /send, as Server-Sent Events.
+ *
+ * Events: `meta` (conversation id and title, sent before the first token so the
+ * sidebar updates immediately), `delta` (text), `done` (citations, model), and
+ * `error`. An error after the stream opens must be an SSE event, not a status
+ * code — the headers are long gone by then.
+ */
+chatRoute.post("/stream", async (c) => {
+	const body = (await c.req.json().catch(() => ({}))) as SendBody;
+	const sessionId = body.session;
+	const text = body.text?.trim();
+
+	if (!validSessionId(sessionId)) return c.json({ error: "bad session" }, 400);
+	if (!text) return c.json({ error: "empty message" }, 400);
+	if (text.length > MAX_MESSAGE_CHARS) {
+		return c.json({ error: `message over ${MAX_MESSAGE_CHARS} characters` }, 413);
+	}
+
+	const ip = c.req.header("cf-connecting-ip") ?? "unknown";
+	if (
+		(await overRateLimit(c.env, `s:${sessionId}`, SEND_LIMIT)) ||
+		(await overRateLimit(c.env, `i:${ip}`, SEND_LIMIT * 3))
+	) {
+		return c.json({ error: "Muitas mensagens em pouco tempo. Espere alguns minutos." }, 429);
+	}
+
+	const conversationId = validConversationId(body.conversationId)
+		? body.conversationId
+		: newConversationId();
+	const threadId = webThreadId(sessionId, conversationId);
+	const isNew = !(await listConversations(c.env, sessionId)).some((x) => x.id === conversationId);
+
+	const env = c.env;
+	const encoder = new TextEncoder();
+	const stream = new ReadableStream<Uint8Array>({
+		async start(controller) {
+			const send = (event: string, data: unknown) => {
+				controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+			};
+
+			try {
+				const meta = await upsertConversation(env, sessionId, conversationId, {
+					title: isNew ? titleFrom(text) : undefined,
+				});
+				send("meta", { conversationId, meta });
+
+				for await (const event of runTurnStream(env, {
+					threadId,
+					text,
+					metadata: { source: "web", session: sessionId },
+				})) {
+					if (event.type === "delta") {
+						send("delta", { text: event.text });
+					} else {
+						send("done", {
+							citations: event.result.citations.map((x) => ({
+								source: x.source,
+								score: x.score,
+							})),
+							model: event.result.model,
+						});
+					}
+				}
+			} catch (err) {
+				console.error("web chat stream failed", err);
+				send("error", { error: "Tive um problema técnico. Tente de novo em instantes." });
+			} finally {
+				controller.close();
+			}
+		},
+	});
+
+	return new Response(stream, {
+		headers: {
+			"content-type": "text/event-stream; charset=utf-8",
+			"cache-control": "no-cache, no-transform",
+			connection: "keep-alive",
+			// Belt and braces against any proxy that buffers by default and would
+			// hold the whole answer until the stream closes.
+			"x-accel-buffering": "no",
+		},
 	});
 });
 

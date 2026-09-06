@@ -76,26 +76,51 @@ export interface ChatCompletionOptions {
 	metadata?: Record<string, string | number | undefined>;
 }
 
-type ChatCompletionJson = {
-	choices: Array<{ message: { content: string }; finish_reason?: string }>;
-	usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
-	model?: string;
-};
-
 /**
- * Unified-billing path. Send an OpenAI-shaped chat-completions body to the
- * Gateway's `/compat` endpoint. The `model` field carries the provider prefix
- * Cloudflare uses (e.g. "google-ai-studio/gemini-2.5-flash", "anthropic/claude-...",
- * "openai/gpt-4o-mini", "@cf/meta/llama-3.3-70b-instruct-fp8-fast").
- *
- * Auth: `Authorization: Bearer <CF_AI_GATEWAY_TOKEN>` — the Gateway pays the
- * upstream provider from your AI Gateway credit balance.
+ * Both providers speak the same OpenAI-shaped body over the Gateway; only the
+ * URL and the auth headers differ. Building the request once keeps the
+ * streaming and non-streaming paths from drifting apart — a `max_tokens` fixed
+ * in one and not the other is exactly the kind of bug that only shows up in
+ * whichever path the tests don't cover.
  */
-export async function compatChat(
+function buildRequest(
 	env: Env,
 	messages: ChatMessage[],
-	options: ChatCompletionOptions = {},
-): Promise<ChatCompletionResult> {
+	options: ChatCompletionOptions,
+	stream: boolean,
+): { url: string; headers: Record<string, string>; body: string } {
+	const provider = (env.LLM_PROVIDER || "compat").toLowerCase();
+	const model = options.model ?? env.LLM_MODEL;
+
+	const common = {
+		model,
+		messages,
+		temperature: options.temperature ?? 0.7,
+		max_tokens: options.maxTokens ?? 1024,
+		...(stream
+			? // Without include_usage the final chunk carries no token counts, and
+				// the turn would be stored with no cost — invisible in the dashboard.
+				{ stream: true, stream_options: { include_usage: true } }
+			: {}),
+	};
+
+	if (provider === "openrouter") {
+		const headers: Record<string, string> = {
+			"content-type": "application/json",
+			// OpenRouter app-attribution headers (public, not auth).
+			"HTTP-Referer": "https://cury.chat",
+			"X-Title": "Cury Chat",
+			...gatewayAuthHeader(env),
+			...gatewayMetadataHeader(options.metadata ?? {}),
+		};
+		if (env.OPENROUTER_API_KEY) headers.Authorization = `Bearer ${env.OPENROUTER_API_KEY}`;
+		return {
+			url: gatewayUrl(env, "openrouter", "/v1/chat/completions"),
+			headers,
+			body: JSON.stringify(common),
+		};
+	}
+
 	if (!env.CF_AI_GATEWAY_TOKEN) {
 		throw new Error(
 			"CF_AI_GATEWAY_TOKEN is not set. Unified-billing /compat requires a Gateway token. " +
@@ -103,96 +128,124 @@ export async function compatChat(
 				"`Create a token`, then `wrangler secret put CF_AI_GATEWAY_TOKEN`.",
 		);
 	}
-	const model = options.model ?? env.LLM_MODEL;
-
-	const headers: Record<string, string> = {
-		"content-type": "application/json",
-		Authorization: `Bearer ${env.CF_AI_GATEWAY_TOKEN}`,
-		...gatewayMetadataHeader(options.metadata ?? {}),
+	return {
+		url: compatUrl(env),
+		headers: {
+			"content-type": "application/json",
+			Authorization: `Bearer ${env.CF_AI_GATEWAY_TOKEN}`,
+			...gatewayMetadataHeader(options.metadata ?? {}),
+		},
+		body: JSON.stringify(common),
 	};
-
-	const body = {
-		model,
-		messages,
-		temperature: options.temperature ?? 0.7,
-		max_tokens: options.maxTokens ?? 1024,
-	};
-
-	const res = await fetch(compatUrl(env), {
-		method: "POST",
-		headers,
-		body: JSON.stringify(body),
-	});
-
-	if (!res.ok) {
-		throw new Error(`compat via gateway: ${res.status} ${await res.text()}`);
-	}
-
-	const json = (await res.json()) as ChatCompletionJson;
-	const text = json.choices?.[0]?.message?.content ?? "";
-	return { text, model: json.model ?? model, usage: json.usage, raw: json };
 }
 
-/**
- * Per-provider path through OpenRouter. Used when LLM_PROVIDER="openrouter"
- * — either with a Worker-held key (OPENROUTER_API_KEY) or with BYOK
- * configured in the Gateway dashboard (no Authorization header sent).
- */
-export async function openrouterChat(
-	env: Env,
-	messages: ChatMessage[],
-	options: ChatCompletionOptions = {},
-): Promise<ChatCompletionResult> {
-	const model = options.model ?? env.LLM_MODEL;
+type ChatCompletionJson = {
+	choices: Array<{ message: { content: string }; finish_reason?: string }>;
+	usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+	model?: string;
+};
 
-	const headers: Record<string, string> = {
-		"content-type": "application/json",
-		// OpenRouter app-attribution headers (public, not auth).
-		"HTTP-Referer": "https://cury.chat",
-		"X-Title": "Cury Chat",
-		...gatewayAuthHeader(env),
-		...gatewayMetadataHeader(options.metadata ?? {}),
-	};
-	if (env.OPENROUTER_API_KEY) {
-		headers.Authorization = `Bearer ${env.OPENROUTER_API_KEY}`;
-	}
-
-	const body = {
-		model,
-		messages,
-		temperature: options.temperature ?? 0.7,
-		max_tokens: options.maxTokens ?? 1024,
-	};
-
-	const res = await fetch(gatewayUrl(env, "openrouter", "/v1/chat/completions"), {
-		method: "POST",
-		headers,
-		body: JSON.stringify(body),
-	});
-
-	if (!res.ok) {
-		throw new Error(`openrouter via gateway: ${res.status} ${await res.text()}`);
-	}
-
-	const json = (await res.json()) as ChatCompletionJson;
-	const text = json.choices?.[0]?.message?.content ?? "";
-	return { text, model: json.model ?? model, usage: json.usage, raw: json };
-}
-
-/**
- * Dispatch based on LLM_PROVIDER. Falls back to compatChat (unified billing).
- */
 export async function chat(
 	env: Env,
 	messages: ChatMessage[],
 	options: ChatCompletionOptions = {},
 ): Promise<ChatCompletionResult> {
+	const { url, headers, body } = buildRequest(env, messages, options, false);
 	const provider = (env.LLM_PROVIDER || "compat").toLowerCase();
-	switch (provider) {
-		case "openrouter":
-			return openrouterChat(env, messages, options);
-		case "compat":
-		default:
-			return compatChat(env, messages, options);
+
+	const res = await fetch(url, { method: "POST", headers, body });
+	if (!res.ok) {
+		throw new Error(`${provider} via gateway: ${res.status} ${await res.text()}`);
 	}
+
+	const json = (await res.json()) as ChatCompletionJson;
+	const text = json.choices?.[0]?.message?.content ?? "";
+	return {
+		text,
+		model: json.model ?? options.model ?? env.LLM_MODEL,
+		usage: json.usage,
+		raw: json,
+	};
+}
+
+export type ChatStreamEvent =
+	| { type: "delta"; text: string }
+	| { type: "done"; text: string; model: string; usage?: ChatCompletionResult["usage"] };
+
+type StreamChunk = {
+	choices?: Array<{ delta?: { content?: string }; finish_reason?: string }>;
+	usage?: ChatCompletionResult["usage"];
+	model?: string;
+};
+
+/**
+ * Same call with `stream: true`, yielded as it arrives.
+ *
+ * The response is Server-Sent Events: `data: {json}` records separated by blank
+ * lines, terminated by `data: [DONE]`. Two things make a naive reader wrong:
+ * a chunk boundary can land mid-record, so the tail must be buffered rather
+ * than parsed; and providers emit keep-alive comments and blank lines that are
+ * not JSON. Both are handled below.
+ */
+export async function* chatStream(
+	env: Env,
+	messages: ChatMessage[],
+	options: ChatCompletionOptions = {},
+): AsyncGenerator<ChatStreamEvent> {
+	const { url, headers, body } = buildRequest(env, messages, options, true);
+	const provider = (env.LLM_PROVIDER || "compat").toLowerCase();
+
+	const res = await fetch(url, { method: "POST", headers, body });
+	if (!res.ok || !res.body) {
+		throw new Error(`${provider} via gateway: ${res.status} ${await res.text()}`);
+	}
+
+	const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+	let buffer = "";
+	let text = "";
+	let model = options.model ?? env.LLM_MODEL;
+	let usage: ChatCompletionResult["usage"];
+
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			buffer += value;
+
+			// Keep the trailing partial line in the buffer for the next chunk.
+			const lines = buffer.split("\n");
+			buffer = lines.pop() ?? "";
+
+			for (const line of lines) {
+				const trimmed = line.trim();
+				if (!trimmed || trimmed.startsWith(":")) continue; // blank or keep-alive
+				if (!trimmed.startsWith("data:")) continue;
+
+				const payload = trimmed.slice(5).trim();
+				if (payload === "[DONE]") continue;
+
+				let chunk: StreamChunk;
+				try {
+					chunk = JSON.parse(payload) as StreamChunk;
+				} catch {
+					continue; // a malformed record should not kill a live answer
+				}
+
+				if (chunk.model) model = chunk.model;
+				if (chunk.usage) usage = chunk.usage;
+
+				const delta = chunk.choices?.[0]?.delta?.content;
+				if (delta) {
+					text += delta;
+					yield { type: "delta", text: delta };
+				}
+			}
+		}
+	} finally {
+		// Releasing the lock matters when the consumer breaks out early — an
+		// abandoned reader holds the upstream connection open.
+		reader.releaseLock();
+	}
+
+	yield { type: "done", text, model, usage };
 }

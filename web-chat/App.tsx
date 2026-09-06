@@ -54,22 +54,57 @@ function ChatView() {
 		if (!text || pending) return;
 
 		// Optimistic: the person's own message should never wait on the network.
-		setTurns((t) => [...t, { role: "user", content: text, ts: Date.now() }]);
+		// The empty assistant turn next to it is the one tokens stream into.
+		setTurns((t) => [
+			...t,
+			{ role: "user", content: text, ts: Date.now() },
+			{ role: "assistant", content: "", ts: Date.now() },
+		]);
 		setDraft("");
 		setPending(true);
 		setError(null);
 
+		// Buffer the deltas and flush on an animation frame. Calling setState per
+		// token re-renders hundreds of times a second and the text visibly stutters.
+		let buffered = "";
+		let frame = 0;
+		const flush = () => {
+			frame = 0;
+			const chunk = buffered;
+			buffered = "";
+			if (!chunk) return;
+			setTurns((t) => {
+				const next = [...t];
+				const last = next[next.length - 1];
+				next[next.length - 1] = { ...last, content: last.content + chunk };
+				return next;
+			});
+		};
+
 		try {
-			const res = await api.send(text, activeId);
-			setActiveId(res.conversationId);
-			setTurns((t) => [
-				...t,
-				{ role: "assistant", content: res.reply, ts: Date.now(), citations: res.citations },
-			]);
-			setConversations((list) => [res.meta, ...list.filter((c) => c.id !== res.meta.id)]);
+			await api.sendStreaming(text, activeId, {
+				onMeta: (conversationId, meta) => {
+					setActiveId(conversationId);
+					setConversations((list) => [meta, ...list.filter((c) => c.id !== meta.id)]);
+				},
+				onDelta: (chunk) => {
+					buffered += chunk;
+					if (!frame) frame = requestAnimationFrame(flush);
+				},
+				onDone: (citations) => {
+					if (frame) cancelAnimationFrame(frame);
+					flush();
+					setTurns((t) => {
+						const next = [...t];
+						next[next.length - 1] = { ...next[next.length - 1], citations };
+						return next;
+					});
+				},
+			});
 		} catch (err) {
-			// Drop the optimistic turn: leaving it implies it was delivered.
-			setTurns((t) => t.slice(0, -1));
+			if (frame) cancelAnimationFrame(frame);
+			// Drop both optimistic turns: leaving them implies the message landed.
+			setTurns((t) => t.slice(0, -2));
 			setDraft(text);
 			setError(err instanceof Error ? err.message : "Falha ao enviar.");
 		} finally {
@@ -179,7 +214,12 @@ function ChatView() {
 					</div>
 				)}
 
-				<Messages turns={turns} pending={pending} onPick={(q) => setDraft(q)} />
+				<Messages
+					turns={turns}
+					pending={pending && !turns[turns.length - 1]?.content}
+					streaming={pending}
+					onPick={(q) => setDraft(q)}
+				/>
 
 				{error && <div className="notice notice-error">{error}</div>}
 
@@ -219,19 +259,24 @@ const SUGGESTIONS = [
 function Messages({
 	turns,
 	pending,
+	streaming,
 	onPick,
 	readOnly,
 }: {
 	turns: Turn[];
 	pending?: boolean;
+	streaming?: boolean;
 	onPick?: (q: string) => void;
 	readOnly?: boolean;
 }) {
 	const bottom = useRef<HTMLDivElement>(null);
-	// biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every append
+	const lastLength = turns[turns.length - 1]?.content.length ?? 0;
+	// biome-ignore lint/correctness/useExhaustiveDependencies: follow the growing answer
 	useEffect(() => {
-		bottom.current?.scrollIntoView({ behavior: "smooth" });
-	}, [turns.length, pending]);
+		// `auto` while streaming: a smooth scroll restarts on every token and
+		// never catches up with the text.
+		bottom.current?.scrollIntoView({ behavior: streaming ? "auto" : "smooth" });
+	}, [turns.length, lastLength, pending]);
 
 	if (turns.length === 0 && !readOnly) {
 		return (
@@ -260,7 +305,7 @@ function Messages({
 		<div className="flex-1 overflow-y-auto px-4 py-6">
 			<div className="mx-auto flex max-w-2xl flex-col gap-5">
 				{turns.map((t, i) => (
-					<Bubble key={`${t.ts}-${i}`} turn={t} />
+					<Bubble key={`${t.ts}-${i}`} turn={t} streaming={streaming && i === turns.length - 1} />
 				))}
 				{pending && <div className="typing">Consultando as fontes…</div>}
 				<div ref={bottom} />
@@ -269,7 +314,7 @@ function Messages({
 	);
 }
 
-function Bubble({ turn }: { turn: Turn }) {
+function Bubble({ turn, streaming }: { turn: Turn; streaming?: boolean }) {
 	const isUser = turn.role === "user";
 	const sources = [...new Set((turn.citations ?? []).map((c) => c.source))].slice(0, 4);
 
@@ -277,6 +322,7 @@ function Bubble({ turn }: { turn: Turn }) {
 		<div className={isUser ? "row-user" : "row-bot"}>
 			<div className={isUser ? "bubble-user" : "bubble-bot"}>
 				{renderMarkdownish(turn.content)}
+				{streaming && !isUser && <span className="caret" />}
 				{sources.length > 0 && (
 					<div className="sources">
 						<span>Fontes:</span>

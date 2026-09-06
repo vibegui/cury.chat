@@ -1,6 +1,6 @@
 // Build the chat-completions call and invoke the LLM through CF AI Gateway.
 
-import { type ChatMessage, chat } from "../ai/gateway.ts";
+import { type ChatMessage, chat, chatStream } from "../ai/gateway.ts";
 import type { Env } from "../env.ts";
 import type { CitationRef, Turn } from "./persist.ts";
 import { type Citation, formatCitationsBlock } from "./retrieve.ts";
@@ -30,14 +30,24 @@ export interface GenerateResult {
 	citationsUsed: CitationRef[];
 }
 
-export async function generate(env: Env, input: GenerateInput): Promise<GenerateResult> {
-	const systemWithContext = buildSystem(input);
-
-	const messages: ChatMessage[] = [
-		{ role: "system", content: systemWithContext },
+function buildMessages(input: GenerateInput): ChatMessage[] {
+	return [
+		{ role: "system", content: buildSystem(input) },
 		...input.thread.map((t) => ({ role: t.role, content: t.content }) as ChatMessage),
 		{ role: "user", content: input.userMessage },
 	];
+}
+
+function citationsUsed(input: GenerateInput): CitationRef[] {
+	return input.citations.map((c) => ({
+		source: c.source,
+		text: c.text.length > SNIPPET_MAX ? `${c.text.slice(0, SNIPPET_MAX)}…` : c.text,
+		score: c.score,
+	}));
+}
+
+export async function generate(env: Env, input: GenerateInput): Promise<GenerateResult> {
+	const messages = buildMessages(input);
 
 	const result = await chat(env, messages, {
 		metadata: input.metadata,
@@ -48,12 +58,39 @@ export async function generate(env: Env, input: GenerateInput): Promise<Generate
 		text: result.text,
 		model: result.model,
 		usage: result.usage,
-		citationsUsed: input.citations.map((c) => ({
-			source: c.source,
-			text: c.text.length > SNIPPET_MAX ? `${c.text.slice(0, SNIPPET_MAX)}…` : c.text,
-			score: c.score,
-		})),
+		citationsUsed: citationsUsed(input),
 	};
+}
+
+/**
+ * Same prompt assembly, streamed. Yields text deltas and finishes with the
+ * assembled GenerateResult, so a caller can render as it arrives and still
+ * persist one complete turn at the end.
+ */
+export async function* generateStream(
+	env: Env,
+	input: GenerateInput,
+): AsyncGenerator<{ type: "delta"; text: string } | { type: "done"; result: GenerateResult }> {
+	const messages = buildMessages(input);
+
+	for await (const event of chatStream(env, messages, {
+		metadata: input.metadata,
+		model: input.model,
+	})) {
+		if (event.type === "delta") {
+			yield event;
+		} else {
+			yield {
+				type: "done",
+				result: {
+					text: event.text,
+					model: event.model,
+					usage: event.usage,
+					citationsUsed: citationsUsed(input),
+				},
+			};
+		}
+	}
 }
 
 function buildSystem(input: GenerateInput): string {

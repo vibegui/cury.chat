@@ -175,6 +175,28 @@ a {
 	color: var(--ink-soft);
 }
 
+/* Blinking block caret while tokens arrive — the only signal that the answer
+   is still being written once text has started appearing. */
+.caret {
+	display: inline-block;
+	width: 7px;
+	height: 1.05em;
+	margin-left: 2px;
+	vertical-align: text-bottom;
+	background: var(--ink-soft);
+	animation: caret-blink 1s step-end infinite;
+}
+@keyframes caret-blink {
+	50% {
+		opacity: 0;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.caret {
+		animation: none;
+	}
+}
+
 .typing {
 	font-size: 14px;
 	color: var(--faint);
