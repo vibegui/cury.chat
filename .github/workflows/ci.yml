@@ -1,0 +1,32 @@
+# Deploys happen automatically from main via Cloudflare Workers Builds. This
+# runs the checks that deploy does not, so a broken push is caught in the PR
+# rather than after it is already live.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run check
+
+      - name: Tests
+        run: bun test
+
+      # The Worker imports dist/web/index.html and dist/chat/chat.html as text,
+      # and both are gitignored. Bundling from a clean checkout is the only
+      # thing that proves the [build] hook in wrangler.toml still covers them.
+      - name: Bundle from a clean checkout
+        run: bunx wrangler deploy --dry-run

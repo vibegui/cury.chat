@@ -10,7 +10,7 @@
 		"build:web": "vite build",
 		"build:chat": "vite build --config vite.chat.config.ts",
 		"build": "bun run build:web && bun run build:chat",
-		"deploy": "bun run build && wrangler deploy",
+		"deploy": "wrangler deploy",
 		"deploy:landing": "wrangler pages deploy landing --project-name=cury-chat",
 		"check": "tsc --noEmit",
 		"test": "bun test",

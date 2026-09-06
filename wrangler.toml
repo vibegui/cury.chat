@@ -89,5 +89,12 @@ type = "Text"
 globs = ["**/*.md", "dist/web/*.html", "dist/chat/*.html", "landing/*.html", "landing/*.txt"]
 fallthrough = true
 
+# Wrangler runs this before bundling, so `wrangler deploy` is self-sufficient:
+# it works from a clean clone and cannot be broken by a CI job configured with
+# the wrong build command. Both dist/ bundles are gitignored and imported as
+# text by the Worker, so without this step the bundle fails to resolve them.
+[build]
+command = "bun run build:web && bun run build:chat"
+
 [observability]
 enabled = true
