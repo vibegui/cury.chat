@@ -10,6 +10,7 @@ import { bundledSystemPrompt } from "../ai/system-prompt.ts";
 import type { Env } from "../env.ts";
 import { type ExportThread, renderThreadsHtml } from "../export/html.ts";
 import { threadIdFor } from "../lib/thread-id.ts";
+import { isWebThread } from "../pipeline/conversations.ts";
 import {
 	getContact,
 	getContactsMany,
@@ -33,7 +34,7 @@ export const tools: Tool[] = [
 	{
 		name: "list_threads",
 		description:
-			"List conversation threads with per-thread aggregates. Each entry has threadId, phone, date, optional contact name, message count, total cost, last activity timestamp, and a preview of the last user message. Suitable for a sortable table view.",
+			'List conversation threads with per-thread aggregates. Each entry has threadId, channel ("whatsapp" or "web"), phone, date, optional contact name, message count, total cost, last activity timestamp, and a preview of the last user message. Suitable for a sortable table view. Web conversations use a browser session id in place of a phone number and a conversation id in place of a date.',
 		inputSchema: {
 			type: "object",
 			properties: {
@@ -57,7 +58,13 @@ export const tools: Tool[] = [
 				return {
 					threads: list.threads.map((threadId) => {
 						const [phone, date] = threadId.split(":");
-						return { threadId, phone, date, name: contacts.get(phone)?.name };
+						return {
+							threadId,
+							channel: isWebThread(threadId) ? "web" : "whatsapp",
+							phone,
+							date,
+							name: contacts.get(phone)?.name,
+						};
 					}),
 					cursor: list.cursor,
 				};
@@ -72,6 +79,7 @@ export const tools: Tool[] = [
 					const [phone, date] = id.split(":");
 					return {
 						threadId: id,
+						channel: isWebThread(id) ? "web" : "whatsapp",
 						phone,
 						date,
 						name: contacts.get(phone)?.name ?? turns.find((t) => t.role === "user" && t.name)?.name,

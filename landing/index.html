@@ -74,6 +74,12 @@
     margin-top: 32px;
   }
   .cta:hover { background: #0f3d68; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .cta-secondary {
+    background: transparent; color: var(--navy);
+    border: 1px solid var(--line);
+  }
+  .cta-secondary:hover { background: var(--navy-soft); }
   .cta-note { display: block; margin-top: 12px; font-size: 14px; color: var(--faint); }
 
   .disclaimer {
@@ -138,10 +144,15 @@
       Cada resposta diz de onde saiu.
     </p>
 
-    <a class="cta" href="https://wa.me/SEUNUMERO?text=Oi%2C%20quero%20conversar%20sobre%20as%20propostas%20do%20Augusto%20Cury" rel="noopener">
-      Falar agora no WhatsApp
-    </a>
-    <small class="cta-note">Grátis. Sem cadastro. Você conversa por mensagem, como com qualquer contato.</small>
+    <div class="cta-row">
+      <a class="cta" href="https://wa.me/SEUNUMERO?text=Oi%2C%20quero%20conversar%20sobre%20as%20propostas%20do%20Augusto%20Cury" rel="noopener">
+        Falar agora no WhatsApp
+      </a>
+      <a class="cta cta-secondary" href="https://cury-mcp.deco-ceo.workers.dev/chat">
+        Falar pela web
+      </a>
+    </div>
+    <small class="cta-note">Grátis. Sem cadastro. No WhatsApp ou direto no navegador.</small>
 
     <div class="disclaimer">
       <strong>Leia antes de começar.</strong>

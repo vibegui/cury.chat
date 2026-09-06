@@ -86,7 +86,7 @@ instance_name = "cury"
 # as strings at build time. The web UI build (vite) writes to dist/web/.
 [[rules]]
 type = "Text"
-globs = ["**/*.md", "dist/web/*.html"]
+globs = ["**/*.md", "dist/web/*.html", "dist/chat/*.html"]
 fallthrough = true
 
 [observability]

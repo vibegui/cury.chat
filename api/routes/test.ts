@@ -13,17 +13,16 @@
 //     -d '{"from":"5511999999999","text":"O que é democracia de alta energia?"}' | jq
 
 import { Hono } from "hono";
-import { loadSystemPrompt } from "../ai/system-prompt.ts";
 import type { Env } from "../env.ts";
 import { threadIdFor } from "../lib/thread-id.ts";
-import { generate } from "../pipeline/generate.ts";
-import { appendTurns, loadThread } from "../pipeline/persist.ts";
-import { retrieve } from "../pipeline/retrieve.ts";
+import { loadThread } from "../pipeline/persist.ts";
+import { runTurn } from "../pipeline/turn.ts";
 
 interface TestRequest {
 	from?: string;
 	text?: string;
 	persist?: boolean; // default true; set false for one-off tests
+	model?: string; // overrides env.LLM_MODEL, for side-by-side model comparison
 }
 
 export const testRoute = new Hono<{ Bindings: Env }>();
@@ -39,50 +38,26 @@ testRoute.post("/", async (c) => {
 	}
 
 	const threadId = threadIdFor(from);
-	const [thread, systemPrompt] = await Promise.all([
-		loadThread(c.env, threadId),
-		loadSystemPrompt(c.env),
-	]);
 
-	const retrieveStart = Date.now();
-	const citations = await retrieve(c.env, text).catch(() => []);
-	const retrieveMs = Date.now() - retrieveStart;
-
-	const generateStart = Date.now();
-	const result = await generate(c.env, {
-		systemPrompt,
-		thread,
-		userMessage: text,
-		citations,
-		metadata: { phone: from, threadId, source: "test-endpoint" },
+	const result = await runTurn(c.env, {
+		threadId,
+		text,
+		model: body.model,
+		persist: body.persist !== false,
+		metadata: { phone: from, source: "test-endpoint" },
 	});
-	const generateMs = Date.now() - generateStart;
-
-	if (body.persist !== false) {
-		await appendTurns(c.env, threadId, [
-			{ role: "user", content: text, ts: Date.now() },
-			{
-				role: "assistant",
-				content: result.text,
-				ts: Date.now(),
-				model: result.model,
-				usage: result.usage,
-				citations: result.citationsUsed,
-			},
-		]);
-	}
 
 	return c.json({
-		reply: result.text,
+		reply: result.reply,
 		threadId,
-		thread_length_before: thread.length,
-		citations: citations.map((c) => ({ source: c.source, score: c.score })),
+		thread_length_before: result.threadLengthBefore,
+		citations: result.citations.map((x) => ({ source: x.source, score: x.score })),
 		model: result.model,
 		usage: result.usage,
 		timings_ms: {
 			total: Date.now() - started,
-			retrieve: retrieveMs,
-			generate: generateMs,
+			retrieve: result.timingsMs.retrieve,
+			generate: result.timingsMs.generate,
 		},
 		ragEnabled: !!c.env.AUTORAG_INSTANCE,
 	});

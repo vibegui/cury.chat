@@ -10,6 +10,8 @@ import { type Citation, formatCitationsBlock } from "./retrieve.ts";
 const SNIPPET_MAX = 600;
 
 export interface GenerateInput {
+	/** Overrides env.LLM_MODEL. Used by /test to A/B models without redeploying. */
+	model?: string;
 	systemPrompt: string;
 	thread: Turn[];
 	userMessage: string;
@@ -39,6 +41,7 @@ export async function generate(env: Env, input: GenerateInput): Promise<Generate
 
 	const result = await chat(env, messages, {
 		metadata: input.metadata,
+		model: input.model,
 	});
 
 	return {
