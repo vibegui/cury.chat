@@ -59,7 +59,7 @@ bunx wrangler secret put TYXTER_API_KEY
 bunx wrangler secret put TYXTER_WEBHOOK_SIGNING_SECRET
 ```
 
-`GET /` mostra `transports.tyxter: true` quando os dois estão presentes.
+`GET /health` mostra `transports.tyxter: true` quando os dois estão presentes.
 
 ## Registrar o webhook
 

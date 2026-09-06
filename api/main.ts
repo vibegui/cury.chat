@@ -1,12 +1,17 @@
 // Cloudflare Worker entrypoint.
 //
 // Routes:
-//   GET  /                — readiness ping
+//   GET  /                — the landing page
+//   GET  /chat, /s/:id    — the web chat UI
+//   GET  /health          — readiness ping (JSON)
 //   GET  /webhook         — Meta verification handshake
 //   POST /webhook         — Meta inbound message (direct Cloud API)
 //   POST /tyxter/webhook  — Tyxter inbound message (brokered WhatsApp)
 //   /api/chat/*           — public web chat (no auth; rate limited)
-//   GET  /chat, /s/:id    — the web chat UI
+//
+// The Worker serves the whole product from one origin. A separate Pages
+// deploy for the landing would mean a second hostname, CORS on the chat API,
+// and a cross-origin CTA — for one static file.
 //
 // All bindings + secrets are defined in wrangler.toml and api/env.ts.
 
@@ -14,6 +19,9 @@ import { Hono } from "hono";
 // Built by `bun run build:chat` and inlined to one file, then imported as text
 // via wrangler.toml's [[rules]] type="Text" rule. Same trick as the MCP app.
 import chatBundle from "../dist/chat/chat.html";
+import landingBundle from "../landing/index.html";
+import landingLlms from "../landing/llms.txt";
+import landingRobots from "../landing/robots.txt";
 import type { Env } from "./env.ts";
 import { requireMcpAuth } from "./lib/auth.ts";
 import { chatRoute } from "./routes/chat.ts";
@@ -25,10 +33,35 @@ import { webhookRoute } from "./routes/webhook.ts";
 // Same cast as api/mcp/resources.ts: @types/bun types `*.html` as HTMLBundle,
 // but wrangler's Text rule hands the Worker a plain string.
 const chatHtml: string = chatBundle as unknown as string;
+const landingHtml: string = landingBundle as unknown as string;
 
 const app = new Hono<{ Bindings: Env }>();
 
 app.get("/", (c) =>
+	c.html(landingHtml, 200, { "cache-control": "public, max-age=0, must-revalidate" }),
+);
+
+const TEXT_ASSETS: Record<string, { body: string; type: string }> = {
+	"/robots.txt": { body: landingRobots as unknown as string, type: "text/plain; charset=utf-8" },
+	"/llms.txt": { body: landingLlms as unknown as string, type: "text/plain; charset=utf-8" },
+	// Generated rather than read from a file: esbuild has no .xml loader, and a
+	// one-URL sitemap is not worth a build plugin. /chat and /s/:id are noindex,
+	// so the landing is the only entry.
+	"/sitemap.xml": {
+		body: `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://cury.chat/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+</urlset>`,
+		type: "application/xml",
+	},
+};
+for (const [path, asset] of Object.entries(TEXT_ASSETS)) {
+	app.get(path, (c) => c.body(asset.body, 200, { "content-type": asset.type }));
+}
+
+// Was `/`. Kept as JSON on its own path so the root can serve the landing —
+// deploy scripts and uptime checks point here.
+app.get("/health", (c) =>
 	c.json({
 		name: "cury-mcp",
 		ok: true,

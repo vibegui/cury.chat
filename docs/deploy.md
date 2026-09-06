@@ -143,7 +143,7 @@ This prints your worker URL — typically `https://cury-mcp.<your-subdomain>.wor
 Verify it's alive:
 
 ```bash
-curl https://cury-mcp.<your-subdomain>.workers.dev/
+curl https://cury-mcp.<your-subdomain>.workers.dev/health
 # → {"name":"cury-mcp","ok":true,"model":"google/gemini-3.5-flash","provider":"openrouter","ragEnabled":true}
 ```
 
@@ -178,7 +178,7 @@ If nothing happens, see [troubleshooting](#troubleshooting).
 
 **`401 invalid signature` in logs.** The `META_APP_SECRET` secret is wrong or unset. Reset it via `wrangler secret put META_APP_SECRET` using the **App Secret** from <https://developers.facebook.com/apps> → Your app → Settings → Basic.
 
-**`OPENROUTER_API_KEY is not set`.** `wrangler secret put OPENROUTER_API_KEY` and re-deploy. The worker reads secrets at request time so no redeploy is needed — but verify with `curl /` that it's healthy.
+**`OPENROUTER_API_KEY is not set`.** `wrangler secret put OPENROUTER_API_KEY` and re-deploy. The worker reads secrets at request time so no redeploy is needed — but verify with `curl /health` that it's healthy.
 
 **Replies arrive but cite nothing / `ragEnabled:false`.** AutoRAG instance name in `wrangler.toml` is empty or doesn't match. Set `AUTORAG_INSTANCE` and re-deploy.
 

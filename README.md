@@ -81,7 +81,7 @@ WhatsApp ──POST──▶│   /webhook    Meta inbound (signature optional) 
                   │                                                        │
                   │   /test       same pipeline, response in HTTP body     │
                   │   /mcp        JSON-RPC control plane (studio target)   │
-                  │   /           health                                   │
+                  │   /           landing · /chat  chat UI · /health ping  │
                   └────────────────────────────────────────────────────────┘
                   ▲                ▲                 ▲              ▲
                   │                │                 │              │
