@@ -62,11 +62,12 @@ const SAMPLE_TURNS = JSON.stringify([
 // -----------------------------------------------------------------------------
 
 describe("MCP tool catalog", () => {
-	test("contains the 9 expected tools", () => {
+	test("contains the 10 expected tools", () => {
 		const names = tools.map((t) => t.name).sort();
 		expect(names).toEqual(
 			[
 				"export_threads_html",
+				"get_analytics",
 				"get_dashboard",
 				"get_status",
 				"get_system_prompt",

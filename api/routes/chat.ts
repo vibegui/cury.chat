@@ -22,6 +22,7 @@ import {
 	upsertConversation,
 	webThreadId,
 } from "../pipeline/conversations.ts";
+import { recordTurn } from "../pipeline/analytics.ts";
 import { loadThread } from "../pipeline/persist.ts";
 import { runTurn, runTurnStream } from "../pipeline/turn.ts";
 
@@ -155,6 +156,14 @@ chatRoute.post("/send", async (c) => {
 	const meta: ConversationMeta = await upsertConversation(c.env, sessionId, conversationId, {
 		title: isNew ? titleFrom(text) : undefined,
 	});
+	c.executionCtx.waitUntil(
+		recordTurn(c.env, {
+			channel: "web",
+			text,
+			who: sessionId,
+			cf: c.req.raw.cf as Record<string, unknown> | undefined,
+		}),
+	);
 
 	return c.json({
 		conversationId,
@@ -199,6 +208,8 @@ chatRoute.post("/stream", async (c) => {
 	const isNew = !(await listConversations(c.env, sessionId)).some((x) => x.id === conversationId);
 
 	const env = c.env;
+	const ctx = c.executionCtx;
+	const cf = c.req.raw.cf as Record<string, unknown> | undefined;
 	const encoder = new TextEncoder();
 	const stream = new ReadableStream<Uint8Array>({
 		async start(controller) {
@@ -211,6 +222,7 @@ chatRoute.post("/stream", async (c) => {
 					title: isNew ? titleFrom(text) : undefined,
 				});
 				send("meta", { conversationId, meta });
+				ctx.waitUntil(recordTurn(env, { channel: "web", text, who: sessionId, cf }));
 
 				for await (const event of runTurnStream(env, {
 					threadId,

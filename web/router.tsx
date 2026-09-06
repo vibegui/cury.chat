@@ -7,6 +7,7 @@
 
 import { useMcpHostContext, useMcpState } from "./context";
 import { AdminView } from "./views/admin";
+import { AnalyticsView } from "./views/analytics";
 import { CorpusView } from "./views/corpus";
 import { ExportResultView } from "./views/export-result";
 import { SendTextView } from "./views/send-text";
@@ -24,6 +25,7 @@ const TOOL_PAGES: Record<string, React.ComponentType> = {
 	send_text: SendTextView,
 	list_corpus: CorpusView,
 	get_dashboard: AdminView,
+	get_analytics: AnalyticsView,
 	export_threads_html: ExportResultView,
 };
 

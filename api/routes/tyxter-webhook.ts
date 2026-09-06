@@ -17,6 +17,7 @@
 import { Hono } from "hono";
 import type { Env } from "../env.ts";
 import { readTyxterSignatureHeaders, verifyTyxterSignature } from "../lib/tyxter-signature.ts";
+import { recordTurn } from "../pipeline/analytics.ts";
 import { alreadyProcessed, markProcessed } from "../pipeline/dedupe.ts";
 import { handleInbound, type Transport } from "../pipeline/index.ts";
 import {
@@ -92,6 +93,11 @@ tyxterWebhookRoute.post("/", async (c) => {
 
 	c.executionCtx.waitUntil(
 		handleInbound(c.env, { transport, normalized, recipientName, senderId }),
+	);
+	// O `cf` aqui é da requisição do Tyxter, não de quem escreveu — por isso o
+	// estado fica de fora no WhatsApp. Melhor um campo vazio que um errado.
+	c.executionCtx.waitUntil(
+		recordTurn(c.env, { channel: "whatsapp", text: normalized.content, who: normalized.from }),
 	);
 
 	return c.text("ok", 200);

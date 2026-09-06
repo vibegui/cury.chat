@@ -10,6 +10,7 @@ import { bundledSystemPrompt } from "../ai/system-prompt.ts";
 import type { Env } from "../env.ts";
 import { type ExportThread, renderThreadsHtml } from "../export/html.ts";
 import { threadIdFor } from "../lib/thread-id.ts";
+import { readAnalytics } from "../pipeline/analytics.ts";
 import { isWebThread } from "../pipeline/conversations.ts";
 import {
 	getContact,
@@ -345,6 +346,22 @@ export const tools: Tool[] = [
 				})),
 				truncated: list.truncated,
 			};
+		},
+	},
+	{
+		name: "get_analytics",
+		description:
+			"Usage analytics: turns and distinct people over a window, ranked by Brazilian state (UF), by question topic, by channel, plus a per-day series and the most active sessions. Region comes from Cloudflare on the web channel; WhatsApp turns carry no region because the request originates from the provider, not the person. No IP addresses or question text are stored.",
+		inputSchema: {
+			type: "object",
+			properties: {
+				days: { type: "number", default: 30, description: "Janela em dias (1-90)" },
+			},
+		},
+		_meta: { ui: { resourceUri: "ui://cury/analytics" } },
+		execute: async (env, input) => {
+			const days = Math.min(90, Math.max(1, (input?.days as number) ?? 30));
+			return readAnalytics(env, days);
 		},
 	},
 	{

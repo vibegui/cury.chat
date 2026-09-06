@@ -1,0 +1,109 @@
+{
+	"educacao": {
+		"slug": "educacao",
+		"answer": "O plano de governo de Augusto Cury para a educação tem como eixo o programa **Escola de Pensadores**, baseado no método **SOFT** (School of Thinkers). A ideia é substituir o modelo tradicional de aula expositiva por uma dinâmica em que o professor atua como provocador, desafiando os alunos a pensar, perguntar e participar ativamente – em vez de apenas repetir conteúdo. Além disso, ele propõe incluir **disciplina obrigatória de gestão da emoção e inteligência multifocal** na grade da educação básica, com foco em combater ansiedade, depressão e bullying. Outro ponto é a **expansão do ensino técnico** no Ensino Médio, para que os jovens saiam da escola com formação profissional, e não apenas preparados para vestibular. O plano também prevê formação continuada de professores e valorização salarial atrelada ao aperfeiçoamento. Quer que eu detalhe algum desses programas?",
+		"sources": [
+			"Semipresidencialismo, gestão da emoção e telemedicina (Terra)",
+			"Quem é Augusto Cury, candidato do Avante (CNN Brasil)",
+			"Perfil e propostas (Band, 27-08-2026)",
+			"Biografia e bibliografia (Wikipédia)",
+			"Plano de Governo - O Brasil dos Nossos Sonhos (TSE 2026)",
+			"Falas públicas - canal oficial no YouTube",
+			"Campanha presidencial de 2026 (Wikipédia)"
+		],
+		"model": "deepseek/deepseek-v4-flash",
+		"generatedAt": "2026-09-06T20:29:29.636Z"
+	},
+	"saude-mental": {
+		"slug": "saude-mental",
+		"answer": "Cury propõe o programa **\"Você é Insubstituível\"** como carro-chefe — idealizado por ele para prevenção ao suicídio, com foco em conscientização sobre depressão e sofrimento psíquico, já referenciado pelo Cremesp pela relevância no enfrentamento de crises emocionais (plano de governo). Ele também criou o **TouchPeace**, uma rede de suporte emocional imediato e escuta ativa operada por voluntários capacitados, que já atua em mais de 100 países. Além disso, o plano prevê reformular o atendimento psicológico e psiquiátrico no SUS, descentralizar o apoio, criar clínicas de prevenção à depressão e instituir programas de acolhimento de emergência, com políticas nacionais focadas em ansiedade e depressão em crianças e adolescentes. Quer que eu detalhe como isso se conecta à educação emocional nas escolas?",
+		"sources": [
+			"Perfil e propostas (Band, 27-08-2026)",
+			"Plano de Governo - O Brasil dos Nossos Sonhos (TSE 2026)",
+			"Semipresidencialismo, gestão da emoção e telemedicina (Terra)",
+			"Campanha presidencial de 2026 (Wikipédia)",
+			"Biografia e bibliografia (Wikipédia)",
+			"Quem é Augusto Cury, candidato do Avante (CNN Brasil)",
+			"Falas públicas - canal oficial no YouTube"
+		],
+		"model": "deepseek/deepseek-v4-flash",
+		"generatedAt": "2026-09-06T20:29:36.331Z"
+	},
+	"semipresidencialismo": {
+		"slug": "semipresidencialismo",
+		"answer": "Olá! Sou o **Cury Chat**, uma IA independente que conversa sobre as ideias e propostas de Augusto Cury a partir de materiais públicos. **Não sou o candidato nem falo em nome dele.**\n\nSobre a sua pergunta:\n\nNo plano de governo e em falas públicas, Cury propõe a transição do presidencialismo para o **semipresidencialismo**. Na prática, o presidente cuidaria de temas estratégicos, relações internacionais e comando das Forças Armadas, enquanto um **primeiro-ministro**, aprovado pelo Congresso, tocaria o dia a dia da administração. Se o premiê for ineficiente ou corrupto, pode ser destituído pelo próprio Congresso, sem crise institucional. Ele já citou o governador Tarcísio de Freitas como possível nome para o cargo.\n\nQuanto às reformas institucionais, Cury defende:\n- **Fim da vitaliciedade no STF**: mandato fixo de **8 anos** para ministros.\n- **Composição técnica**: 2/3 dos ministros vindos da magistratura, dois a três do Ministério Público e um advogado indicado pela OAB — e não mais escolhidos pelo presidente.\n- **Fim da transmissão ao vivo dos votos** no STF para reduzir a \"espetacularização\", mantendo a gravação disponível depois.\n\nEssas propostas estão no programa \"O Brasil dos Nossos",
+		"sources": [
+			"Semipresidencialismo, gestão da emoção e telemedicina (Terra)",
+			"Quem é Augusto Cury, candidato do Avante (CNN Brasil)",
+			"Falas públicas - canal oficial no YouTube",
+			"Biografia e bibliografia (Wikipédia)"
+		],
+		"model": "deepseek/deepseek-v4-flash",
+		"generatedAt": "2026-09-06T20:29:45.728Z"
+	},
+	"empreendedorismo": {
+		"slug": "empreendedorismo",
+		"answer": "No eixo empreendedorismo, o plano de governo \"O Brasil dos Nossos Sonhos\" prevê a criação de uma Secretaria Executiva ou Ministério do Empreendedorismo e da Economia Distribuída, com 10 mil Escolas de Empreendedorismo e 10 mil Clubes de Empreendedorismo em escolas, igrejas e associações, além de um \"Banco do Empreendedor\" com crédito de até R$ 20 mil a juros de 5% a 6% ao ano — o objetivo é financiar 10 milhões de microempresas em 8 a 10 anos (Band, Terra). Na economia, Cury defende revisão do pacto federativo para redistribuir tributos aos municípios, redução de 8 a 10 ministérios, transição para a escala 5x2, manutenção dos incentivos da Zona Franca de Manaus, criação do Semiárido Produtivo e digitalização de serviços públicos para economizar entre R$ 150 e R$ 200 bilhões com pessoal (Terra, Band). Quer que eu aprofunde algum desses pontos?",
+		"sources": [
+			"Biografia e bibliografia (Wikipédia)",
+			"Semipresidencialismo, gestão da emoção e telemedicina (Terra)",
+			"Perfil e propostas (Band, 27-08-2026)",
+			"Quem é Augusto Cury, candidato do Avante (CNN Brasil)",
+			"Falas públicas - canal oficial no YouTube"
+		],
+		"model": "deepseek/deepseek-v4-flash",
+		"generatedAt": "2026-09-06T20:29:54.253Z"
+	},
+	"saude": {
+		"slug": "saude",
+		"answer": "Augusto Cury propõe transformar o Brasil num centro de telemedicina para atender cerca de 80% das consultas básicas do SUS, com foco em agilidade — ele cita, por exemplo, atender uma criança com diarreia ou um idoso em 30 minutos (Terra). Na saúde mental, o plano prevê o programa de prevenção ao suicídio \"Você é Insubstituível\", a rede de escuta ativa TouchPeace e políticas nacionais para ansiedade e depressão em crianças e adolescentes.\n\nJá o PNAPE (Programa Nacional de Acompanhamento Anual Pediátrico e Emocional), instituído pelo PL 5815/2025 — chamado Lei Augusto Cury —, propõe que o Estado realize escutas ativas periódicas e acompanhamento sistemático de menores para protegê-los de violência, exploração e abandono, funcionando como uma \"blindagem ativa contra predadores sexuais\" (Plano de Governo \"O Brasil dos Nossos Sonhos\" e Band). Quer detalhar algum desses pontos?",
+		"sources": [
+			"Semipresidencialismo, gestão da emoção e telemedicina (Terra)",
+			"Perfil e propostas (Band, 27-08-2026)",
+			"Falas públicas - canal oficial no YouTube",
+			"Plano de Governo - O Brasil dos Nossos Sonhos (TSE 2026)",
+			"Biografia e bibliografia (Wikipédia)"
+		],
+		"model": "deepseek/deepseek-v4-flash",
+		"generatedAt": "2026-09-06T20:30:01.832Z"
+	},
+	"inteligencia-multifocal": {
+		"slug": "inteligencia-multifocal",
+		"answer": "A Teoria da Inteligência Multifocal (TIM) é a base teórica que Cury desenvolveu sobre como a mente constrói pensamentos e emoções. No e-book gratuito que ele distribui, a ideia central é que o \"Eu\" é o piloto consciente da mente, mas convive com \"copilotos\" inconscientes — o Registro Automático da Memória (RAM), que grava tudo involuntariamente, e os gatilhos, janelas e âncoras da memória, que abrem e fecham áreas de leitura conforme a carga emocional. Daí o conceito de \"janelas\" saudáveis (light) e traumáticas (killer). A TIM também propõe ferramentas práticas de gestão da emoção, como o Pacto do Eu, para a pessoa não ser refém do próprio automaticismo emocional.\n\nVale registrar uma distinção importante: a TIM é uma formulação autoral de grande circulação comercial, mas não tem validação científica estabelecida. Em abril de 2026, cinco psiquiatras ouvidos pela Folha de S.Paulo afirmaram que não a reconhecem como teoria clínica validada; Cury rebateu dizendo que aspectos do seu trabalho têm respaldo acadêmico (Wikipédia). Isso não anula as propostas — mas é bom saber que elas derivam de uma visão própria, não de um consenso científico.\n\nNo plano de governo, a TIM aparece como espinha dorsal, principalmente na educação: Cury propõe incluir disciplina obrigatória de gestão da emoção e inteligência multifocal na educação básica, capacitar professores para lidar com estresse, ansiedade e bullying, e implementar o programa Escola de Pensadores, com o método SOFT (School of Thinkers), que substitui o modelo expositivo por práticas de empatia e pensamento crítico. Na saúde, a teoria embasa a prioridade em saúde mental: reformulação do atendimento psicológico e psiquiátrico no SUS com descentralização, clínicas de prevenção à depressão e o programa \"Você é Insubstituível\" de prevenção ao suicídio.\n\nQuer que eu detalhe alguma parte — as ferramentas da TIM ou uma proposta específica?",
+		"sources": [
+			"Falas públicas - canal oficial no YouTube",
+			"Biografia e bibliografia (Wikipédia)",
+			"Campanha presidencial de 2026 (Wikipédia)",
+			"Teoria da Inteligência Multifocal (e-book oficial gratuito)",
+			"Perfil e propostas (Band, 27-08-2026)",
+			"Plano de Governo - O Brasil dos Nossos Sonhos (TSE 2026)"
+		],
+		"model": "deepseek/deepseek-v4-flash",
+		"generatedAt": "2026-09-06T20:30:15.727Z"
+	},
+	"quem-e": {
+		"slug": "quem-e",
+		"answer": "Olá! Sou uma IA independente, treinada em materiais públicos (plano de governo, e-books, entrevistas) sobre as ideias de Augusto Cury. **Não sou o candidato nem falo em nome da campanha.**\n\nAugusto Cury tem 67 anos, nasceu em Colina (SP). É médico psiquiatra formado pela Faculdade de Medicina de São José do Rio Preto (FAMERP), com pós-graduação na PUC-SP e doutorado internacional em Psicologia pela Florida Christian University.\n\nComo escritor, segundo seu site pessoal, é \"considerado o psiquiatra mais lido do mundo, com mais de 40 milhões de livros vendidos no Brasil e publicado em mais de 70 países\". Os best-sellers incluem *O Vendedor de Sonhos* (adaptado ao cinema), *Ansiedade – Como Enfrentar o Mal do Século* e *O Homem Mais Inteligente da História*. Criou a **Teoria da Inteligência Multifocal**, que estuda o funcionamento da mente e a gestão das emoções.\n\nA candidatura à Presidência em 2026 pelo **Avante** é sua estreia na política. A coligação \"Brasil dos Nossos Sonhos\" (Avante + Agir) foi formalizada em agosto. O plano de governo, chamado *O Brasil dos Nossos Sonhos*, tem cerca de 200 páginas e coloca saúde mental e educação emocional como eixos centrais. Ele se define com a frase \"mente capitalista, mas um coração social\" e rejeita os rótulos de direita ou esquerda.\n\nQuer saber mais sobre alguma proposta específica?",
+		"sources": [
+			"Quem é Augusto Cury, candidato do Avante (CNN Brasil)",
+			"Campanha presidencial de 2026 (Wikipédia)",
+			"Perfil e propostas (Band, 27-08-2026)",
+			"Falas públicas - canal oficial no YouTube"
+		],
+		"model": "deepseek/deepseek-v4-flash",
+		"generatedAt": "2026-09-06T20:30:31.598Z"
+	},
+	"neuroinclusao": {
+		"slug": "neuroinclusao",
+		"answer": "No plano de governo de Augusto Cury, a defesa de neurodivergentes é explicitamente mencionada como uma das pautas centrais da plataforma. Segundo o perfil da campanha, ele propõe a criação de \"programas de acolhimento psicológico de emergência para a população vulnerável, trabalhadores sobrecarregados e os milhões de neurodivergentes do país\" (Wikipédia, perfil da campanha). Além disso, a reformulação do atendimento psicológico e psiquiátrico no SUS, com descentralização do apoio emocional, também visa incluir esse público.",
+		"sources": [
+			"Semipresidencialismo, gestão da emoção e telemedicina (Terra)",
+			"Campanha presidencial de 2026 (Wikipédia)",
+			"Plano de Governo - O Brasil dos Nossos Sonhos (TSE 2026)",
+			"Perfil e propostas (Band, 27-08-2026)",
+			"Falas públicas - canal oficial no YouTube"
+		],
+		"model": "deepseek/deepseek-v4-flash",
+		"generatedAt": "2026-09-06T20:30:44.487Z"
+	}
+}
