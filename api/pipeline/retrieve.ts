@@ -90,8 +90,14 @@ export async function retrieve(env: Env, query: string, topK = 10): Promise<Cita
 
 export function prettifySource(filename: string): string {
 	// "01. Plano de Governo - Augusto Cury.md" → "Plano de Governo"
-	const noExt = filename.replace(/\.md$/i, "").replace(/\.summary$/i, "");
-	const stripPrefix = noExt.replace(/^\d+\.\s*/, "");
+	//
+	// The prefix is dotted, not a single number: the plan slices are named
+	// "01.39 …" so they sort under the original document. A `^\d+\.` pattern ate
+	// only the "01." and left a bare "39" in front of the citation the reader
+	// sees.
+	const noDir = filename.replace(/^.*\//, "");
+	const noExt = noDir.replace(/\.md$/i, "").replace(/\.summary$/i, "");
+	const stripPrefix = noExt.replace(/^\d+(?:\.\d+)*\.?\s*/, "");
 	const stripAuthor = stripPrefix.replace(/\s*-\s*Augusto Cury\s*$/, "");
 	return stripAuthor || filename;
 }

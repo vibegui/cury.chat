@@ -256,11 +256,17 @@ function ChatView() {
 
 // -----------------------------------------------------------------------------
 
+// Quebra-gelo: o que o eleitor já quer saber, não o que o candidato gosta de
+// falar. As anteriores abriam por inteligência multifocal e semipresidencialismo
+// — tema de autor, não de urna. Ordem tirada da Quaest de 2026 sobre o principal
+// problema do país: violência 38%, corrupção 17%, economia 12%, saúde 11%,
+// educação 6%. Educação fica porque é onde ele tem a proposta mais densa e é o
+// tema que o associa; multifocal e semipresidencialismo seguem em /temas.
 const SUGGESTIONS = [
+	"O que ele propõe para a segurança pública?",
+	"Como ele pretende combater a corrupção?",
+	"O que ele propõe para melhorar o SUS?",
 	"Qual a proposta dele para a educação?",
-	"O que é inteligência multifocal?",
-	"O que ele propõe sobre saúde mental?",
-	"O que é semipresidencialismo no plano dele?",
 ];
 
 function Messages({
