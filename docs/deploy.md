@@ -185,3 +185,51 @@ If nothing happens, see [troubleshooting](#troubleshooting).
 **Replies arrive but only sometimes.** Check `wrangler tail` for `dedupe hit` — Meta retried before you finished. This is benign as long as you got at least one reply.
 
 **Same reply twice.** Dedupe KV not bound. Re-check `wrangler.toml`'s `DEDUPE` namespace and re-deploy.
+
+---
+
+## Apontar cury.chat para o Worker
+
+O domínio já está na conta Cloudflare. Duas formas de ligar ao Worker:
+
+**Dashboard** — Workers & Pages → `cury-mcp` → Settings → Domains & Routes →
+Add → Custom Domain → `cury.chat`. A Cloudflare cria o registro e emite o
+certificado.
+
+**Declarativo** — em `wrangler.toml`:
+
+```toml
+routes = [{ pattern = "cury.chat", custom_domain = true }]
+```
+
+O `workers.dev` continua respondendo depois disso. Vale manter: é a URL de
+fallback se algo no DNS der errado.
+
+### O que precisa ser refeito depois que o domínio subir
+
+1. **Re-registrar o webhook da Tyxter.** Endpoints são por URL — o atual
+   aponta para `cury-mcp.deco-ceo.workers.dev/tyxter/webhook` e continuará
+   recebendo, mas o certo é migrar:
+
+   ```bash
+   bun run tyxter:setup https://cury.chat
+   ```
+
+   Isso cria um endpoint novo e imprime um `signing_secret` novo (só aparece
+   uma vez). Grave com `wrangler secret put TYXTER_WEBHOOK_SIGNING_SECRET` e
+   remova o endpoint antigo pelo dashboard da Tyxter — senão os dois entregam
+   e só um segredo está configurado, o que faz o outro falhar 20 vezes
+   seguidas e ser auto-desabilitado.
+
+2. **Cache Rule para o Worker não rodar em toda visita.** É o único jeito de a
+   landing ser servida da borda sem invocar o script (ver
+   `api/lib/static-asset.ts`). Rules → Cache Rules → se o caminho for `/`,
+   `/llms.txt`, `/robots.txt` ou `/sitemap.xml`, `Eligible for cache` +
+   `Edge TTL: respect origin`.
+
+3. **Desligar o pós-processamento de HTML** (Speed → Optimization) se quiser
+   que o ETag sobreviva em `text/html`. Hoje a Cloudflare o remove no
+   workers.dev; com isso desligado, `/` e `/chat` passam a revalidar com 304.
+
+4. **Conferir o `llms.txt` e o `robots.txt`** — as duas já referenciam
+   `https://cury.chat`, então passam a estar corretas em vez de aspiracionais.
