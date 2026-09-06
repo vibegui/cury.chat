@@ -2,157 +2,204 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>cury.chat — converse com as ideias de Augusto Cury</title>
-<meta name="description" content="Projeto independente. Um agente de IA que conversa sobre as propostas e ideias públicas de Augusto Cury, ancorado no plano de governo e em materiais públicos. Não é a campanha.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>cury.chat — pergunte o que Augusto Cury propõe</title>
+<meta name="description" content="Projeto independente. Um agente de IA que conversa sobre as propostas públicas de Augusto Cury, ancorado no plano de governo protocolado no TSE. Cada resposta diz de onde saiu. Não é a campanha.">
 <link rel="canonical" href="https://cury.chat/">
-<meta name="theme-color" content="#0b2e4f">
+<meta name="theme-color" content="#0d3a63">
+<meta name="color-scheme" content="light dark">
+
+<!-- WhatsApp lê og:*, não twitter:*, e não executa JS. URLs absolutas e
+     width/height explícitos são o que faz a prévia aparecer de primeira. -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://cury.chat/">
-<meta property="og:title" content="cury.chat — converse com as ideias de Augusto Cury">
-<meta property="og:description" content="Projeto independente, com IA, ancorado em materiais públicos. Não é a campanha.">
+<meta property="og:site_name" content="cury.chat">
 <meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Pergunte o que Augusto Cury propõe — e de onde isso vem">
+<meta property="og:description" content="Projeto independente, com IA, ancorado no plano de governo protocolado no TSE. Não é a campanha, o Avante nem Augusto Cury.">
+<meta property="og:image" content="https://cury.chat/og.png">
+<meta property="og:image:secure_url" content="https://cury.chat/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="cury.chat — pergunte o que Augusto Cury propõe e de onde isso vem.">
+
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pergunte o que Augusto Cury propõe — e de onde isso vem">
+<meta name="twitter:description" content="Projeto independente, com IA, ancorado em fontes públicas. Não é a campanha.">
+<meta name="twitter:image" content="https://cury.chat/og.png">
+
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"cury.chat","url":"https://cury.chat/",
+"description":"Projeto independente. Agente de IA sobre as propostas públicas de Augusto Cury.",
+"inLanguage":"pt-BR","isAccessibleForFree":true,
+"publisher":{"@type":"Organization","name":"cury.chat"}}
+</script>
+
 <style>
   :root {
-    --ink: #10161c;
-    --ink-soft: #4a5560;
-    --faint: #7c8792;
-    --bg: #fbfaf7;
-    --surface: #ffffff;
-    --line: #e2ded6;
-    --navy: #0b2e4f;
-    --navy-soft: #e8eff5;
-    --warn-bg: #fff8e6;
-    --warn-line: #e8d49a;
-    --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color-scheme: light;
+    --canvas: oklch(0.985 0.003 250);
+    --surface: oklch(1 0 0);
+    --line: oklch(0.90 0.006 250);
+    --ink: oklch(0.22 0.015 250);
+    --ink-soft: oklch(0.45 0.012 250);
+    --faint: oklch(0.55 0.010 250);
+    --accent: oklch(0.36 0.075 250);
+    --accent-ink: oklch(1 0 0);
+    --accent-soft: oklch(0.95 0.020 250);
+    --warn-bg: oklch(0.97 0.032 92);
+    --warn-line: oklch(0.87 0.070 92);
+    --ease: cubic-bezier(0.25, 1, 0.5, 1);
   }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --canvas: oklch(0.19 0.012 250);
+      --surface: oklch(0.235 0.014 250);
+      --line: oklch(0.33 0.016 250);
+      --ink: oklch(0.96 0.004 250);
+      --ink-soft: oklch(0.79 0.010 250);
+      --faint: oklch(0.66 0.012 250);
+      --accent: oklch(0.74 0.105 250);
+      --accent-ink: oklch(0.18 0.030 250);
+      --accent-soft: oklch(0.28 0.032 250);
+      --warn-bg: oklch(0.27 0.045 92);
+      --warn-line: oklch(0.42 0.070 92);
+    }
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: var(--font);
-    font-size: 17px;
-    line-height: 1.65;
-    color: var(--ink);
-    background: var(--bg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px; line-height: 1.65;
+    color: var(--ink); background: var(--canvas);
     -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--navy); }
-  .wrap { max-width: 780px; margin: 0 auto; padding: 0 20px; }
-  .band { padding: 72px 0; }
-  .band + .band { border-top: 1px solid var(--line); }
+  a { color: var(--accent); }
+  :where(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 
-  .brand { font-weight: 800; letter-spacing: -0.4px; font-size: 18px; }
-  .brand span { color: var(--faint); font-weight: 600; }
-  header { padding: 28px 0; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 22px; }
+  section { padding: 68px 0; }
+  section + section { border-top: 1px solid var(--line); }
+
+  header { padding: 22px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.3px; }
+  .brand img { width: 30px; height: 30px; border-radius: 8px; }
+  .brand span { color: var(--faint); font-weight: 600; font-size: 14px; letter-spacing: 0; }
 
   h1 {
-    font-size: clamp(34px, 6vw, 52px);
-    line-height: 1.08;
-    letter-spacing: -1.4px;
-    font-weight: 800;
+    font-size: clamp(34px, 6.2vw, 54px); line-height: 1.06;
+    letter-spacing: -1.5px; font-weight: 800; text-wrap: balance;
     margin-bottom: 20px;
   }
-  h1 em { font-style: normal; color: var(--navy); }
-  .lede { font-size: clamp(18px, 2.4vw, 21px); color: var(--ink-soft); max-width: 60ch; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lede { font-size: clamp(18px, 2.3vw, 20px); color: var(--ink-soft); max-width: 58ch; text-wrap: pretty; }
 
-  h2 {
-    font-size: 13px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1.1px;
-    color: var(--faint);
-    margin-bottom: 20px;
-  }
-  h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.2px; }
+  h2 { font-size: 25px; font-weight: 750; letter-spacing: -0.5px; margin-bottom: 22px; text-wrap: balance; }
+  h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
 
+  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 34px; }
   .cta {
-    display: inline-flex; align-items: center; gap: 10px;
-    background: var(--navy); color: #fff; text-decoration: none;
-    font-weight: 700; font-size: 17px;
-    padding: 15px 28px; border-radius: 999px;
-    margin-top: 32px;
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--accent); color: var(--accent-ink); text-decoration: none;
+    font-weight: 700; font-size: 17px; padding: 15px 28px; border-radius: 999px;
+    transition: transform 150ms var(--ease);
   }
-  .cta:hover { background: #0f3d68; }
-  .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-  .cta-secondary {
-    background: transparent; color: var(--navy);
-    border: 1px solid var(--line);
+  .cta:hover { transform: translateY(-1px); }
+  .cta-soon {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: transparent; color: var(--faint);
+    border: 1px dashed var(--line);
+    font-weight: 650; font-size: 17px; padding: 15px 24px; border-radius: 999px;
+    cursor: not-allowed;
   }
-  .cta-secondary:hover { background: var(--navy-soft); }
-  .cta-note { display: block; margin-top: 12px; font-size: 14px; color: var(--faint); }
+  .cta-soon b {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+    border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; color: var(--faint);
+  }
+  .cta-note { display: block; margin-top: 13px; font-size: 14.5px; color: var(--faint); }
 
   .disclaimer {
-    background: var(--warn-bg);
-    border: 1px solid var(--warn-line);
-    border-radius: 10px;
-    padding: 18px 20px;
-    font-size: 15.5px;
-    line-height: 1.55;
-    margin-top: 36px;
+    background: var(--warn-bg); border: 1px solid var(--warn-line);
+    border-radius: 12px; padding: 18px 20px;
+    font-size: 15.5px; line-height: 1.55; margin-top: 34px;
   }
   .disclaimer strong { display: block; margin-bottom: 4px; }
 
-  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); }
-  .card {
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: 10px; padding: 20px;
+  /* Duas colunas de comportamento. O que o agente recusa é tão informativo
+     quanto o que ele faz — e é o que distingue este projeto de um chatbot
+     qualquer sobre um candidato. */
+  .does { display: grid; gap: 34px 40px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .does h3 { font-size: 14px; letter-spacing: -0.1px; color: var(--ink); margin-bottom: 12px; }
+  .does ul { list-style: none; display: grid; gap: 11px; }
+  .does li { font-size: 15.5px; color: var(--ink-soft); padding-left: 26px; position: relative; text-wrap: pretty; }
+  .does li::before {
+    position: absolute; left: 0; top: -1px; font-size: 15px; font-weight: 700;
   }
-  .card p { font-size: 15.5px; color: var(--ink-soft); }
+  .does .yes li::before { content: "→"; color: var(--accent); }
+  .does .no li::before { content: "×"; color: var(--faint); }
 
   ul.sources { list-style: none; }
-  ul.sources li { padding: 14px 0; border-bottom: 1px solid var(--line); }
+  ul.sources li { padding: 15px 0; border-bottom: 1px solid var(--line); }
   ul.sources li:last-child { border-bottom: none; }
   ul.sources .what { font-weight: 700; }
   ul.sources .meta { display: block; font-size: 14.5px; color: var(--ink-soft); margin-top: 2px; }
   .excluded {
-    margin-top: 24px; font-size: 15px; color: var(--ink-soft);
-    background: var(--navy-soft); border-radius: 10px; padding: 16px 18px;
+    margin-top: 26px; font-size: 15px; color: var(--ink-soft);
+    background: var(--accent-soft); border-radius: 12px; padding: 17px 19px; text-wrap: pretty;
   }
 
   dl.faq dt { font-weight: 700; margin-top: 22px; }
   dl.faq dt:first-child { margin-top: 0; }
-  dl.faq dd { color: var(--ink-soft); font-size: 16px; }
+  dl.faq dd { color: var(--ink-soft); font-size: 16px; text-wrap: pretty; }
 
   .help {
     border: 1px solid var(--line); background: var(--surface);
-    border-radius: 10px; padding: 20px; font-size: 16px;
+    border-radius: 12px; padding: 20px; font-size: 16px; text-wrap: pretty;
   }
-  .help strong { color: var(--navy); }
+  .help strong { color: var(--accent); }
 
-  footer {
-    border-top: 1px solid var(--line);
-    padding: 36px 0 64px;
-    font-size: 14.5px;
-    color: var(--faint);
-  }
+  footer { border-top: 1px solid var(--line); padding: 34px 0 60px; font-size: 14.5px; color: var(--faint); }
   footer p + p { margin-top: 10px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition-duration: 0.01ms !important; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap"><div class="brand">cury.chat <span>· projeto independente</span></div></div>
+  <div class="wrap">
+    <div class="brand">
+      <img src="/icon.svg" alt="" width="30" height="30">
+      cury.chat <span>projeto independente</span>
+    </div>
+  </div>
 </header>
 
-<section class="band" style="padding-top:24px">
+<section style="padding-top:26px">
   <div class="wrap">
     <h1>Pergunte o que <em>Augusto Cury</em> propõe — e de onde isso vem.</h1>
     <p class="lede">
       Um agente de inteligência artificial que conversa sobre as propostas e ideias públicas do
       candidato, ancorado no plano de governo protocolado no TSE e em outros materiais abertos.
-      Cada resposta diz de onde saiu.
+      Cada resposta diz de qual fonte saiu.
     </p>
 
     <div class="cta-row">
-      <a class="cta" href="https://wa.me/SEUNUMERO?text=Oi%2C%20quero%20conversar%20sobre%20as%20propostas%20do%20Augusto%20Cury" rel="noopener">
-        Falar agora no WhatsApp
-      </a>
-      <a class="cta cta-secondary" href="/chat">
-        Falar pela web
-      </a>
+      <a class="cta" href="/chat">Conversar agora</a>
+      <span class="cta-soon" aria-disabled="true">WhatsApp <b>em breve</b></span>
     </div>
-    <small class="cta-note">Grátis. Sem cadastro. No WhatsApp ou direto no navegador.</small>
+    <small class="cta-note">Grátis, sem cadastro, direto no navegador.</small>
 
     <div class="disclaimer">
       <strong>Leia antes de começar.</strong>
@@ -164,27 +211,33 @@
   </div>
 </section>
 
-<section class="band">
+<section>
   <div class="wrap">
-    <h2>Para que serve</h2>
-    <div class="cards">
-      <div class="card">
-        <h3>Para o eleitor</h3>
-        <p>Descubra o que o candidato propõe sobre um tema específico, sem ler 200 páginas.</p>
+    <h2>O que ele faz — e o que recusa fazer</h2>
+    <div class="does">
+      <div>
+        <h3>Faz</h3>
+        <ul class="yes">
+          <li>Responde o que o plano de governo diz sobre um tema, sem você ler 200 páginas</li>
+          <li>Mostra as fontes que sustentaram cada resposta</li>
+          <li>Explica a Teoria da Inteligência Multifocal e como ela virou proposta pública</li>
+          <li>Admite quando não tem base para responder</li>
+        </ul>
       </div>
-      <div class="card">
-        <h3>Para jornalistas</h3>
-        <p>Localize rápido a passagem do plano de governo que trata de um assunto, com a fonte.</p>
-      </div>
-      <div class="card">
-        <h3>Para pesquisadores</h3>
-        <p>Explore as ideias da Teoria da Inteligência Multifocal e como elas viram proposta pública.</p>
+      <div>
+        <h3>Recusa</h3>
+        <ul class="no">
+          <li>Pedir voto ou fazer campanha</li>
+          <li>Atacar outros candidatos</li>
+          <li>Falar em primeira pessoa, como se fosse ele</li>
+          <li>Inventar citação de livro que não está no acervo</li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
-<section class="band" id="fontes">
+<section id="fontes">
   <div class="wrap">
     <h2>De onde vêm as respostas</h2>
     <ul class="sources">
@@ -201,7 +254,7 @@
       </li>
       <li>
         <span class="what">Falas públicas e entrevistas</span>
-        <span class="meta">Transcrições de vídeos públicos do canal oficial e de entrevistas de campanha.</span>
+        <span class="meta">Transcrições de vídeos do canal oficial e de entrevistas de campanha.</span>
       </li>
       <li>
         <span class="what">Verbetes da Wikipédia</span>
@@ -221,7 +274,7 @@
   </div>
 </section>
 
-<section class="band">
+<section>
   <div class="wrap">
     <h2>Perguntas honestas</h2>
     <dl class="faq">
@@ -243,7 +296,7 @@
   </div>
 </section>
 
-<section class="band">
+<section>
   <div class="wrap">
     <h2>Se você precisa de ajuda agora</h2>
     <p class="help">
@@ -258,7 +311,7 @@
 <footer>
   <div class="wrap">
     <p><b>cury.chat</b> — projeto independente, sem vínculo com Augusto Cury, com a campanha ou com o Avante.</p>
-    <p>Conteúdo das respostas gerado por inteligência artificial a partir de fontes públicas listadas em <a href="#fontes">De onde vêm as respostas</a>.</p>
+    <p>Conteúdo das respostas gerado por inteligência artificial a partir das fontes listadas em <a href="#fontes">De onde vêm as respostas</a>.</p>
     <p>Marcas e nomes citados pertencem a seus respectivos titulares.</p>
   </div>
 </footer>

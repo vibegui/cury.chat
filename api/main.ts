@@ -19,7 +19,13 @@ import { Hono } from "hono";
 // Built by `bun run build:chat` and inlined to one file, then imported as text
 // via wrangler.toml's [[rules]] type="Text" rule. Same trick as the MCP app.
 import chatBundle from "../dist/chat/chat.html";
+import appleIcon from "../landing/apple-touch-icon.png";
+import favicon32 from "../landing/favicon-32.png";
+import icon192 from "../landing/icon-192.png";
+import icon512 from "../landing/icon-512.png";
+import iconSvg from "../landing/icon.svg";
 import landingBundle from "../landing/index.html";
+import ogImage from "../landing/og.png";
 import landingLlms from "../landing/llms.txt";
 import landingRobots from "../landing/robots.txt";
 import type { Env } from "./env.ts";
@@ -77,6 +83,35 @@ for (const [path, { body, type }] of Object.entries(TEXT_ASSETS)) {
 	const built = staticAsset(body, type, CACHE_TEXT);
 	app.get(path, (c) => serveStatic(built, c.req.header("if-none-match")));
 }
+
+/*
+ * Brand assets. Immutable in practice — the content only changes when
+ * `bun run brand` regenerates them, and a stale favicon is a cosmetic problem
+ * for a day, not a correctness one. Long max-age, no revalidation.
+ */
+const BINARY_ASSETS: Record<string, { body: ArrayBuffer; type: string }> = {
+	"/og.png": { body: ogImage as unknown as ArrayBuffer, type: "image/png" },
+	"/favicon.ico": { body: favicon32 as unknown as ArrayBuffer, type: "image/png" },
+	"/favicon-32.png": { body: favicon32 as unknown as ArrayBuffer, type: "image/png" },
+	"/apple-touch-icon.png": { body: appleIcon as unknown as ArrayBuffer, type: "image/png" },
+	"/icon-192.png": { body: icon192 as unknown as ArrayBuffer, type: "image/png" },
+	"/icon-512.png": { body: icon512 as unknown as ArrayBuffer, type: "image/png" },
+};
+for (const [path, { body, type }] of Object.entries(BINARY_ASSETS)) {
+	app.get(
+		path,
+		() =>
+			new Response(body, {
+				headers: { "content-type": type, "cache-control": "public, max-age=604800" },
+			}),
+	);
+}
+app.get("/icon.svg", (c) =>
+	serveStatic(
+		staticAsset(iconSvg as unknown as string, "image/svg+xml", "public, max-age=604800"),
+		c.req.header("if-none-match"),
+	),
+);
 
 // Was `/`. Kept as JSON on its own path so the root can serve the landing —
 // deploy scripts and uptime checks point here.
