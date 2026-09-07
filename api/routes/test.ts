@@ -23,6 +23,10 @@ interface TestRequest {
 	text?: string;
 	persist?: boolean; // default true; set false for one-off tests
 	model?: string; // overrides env.LLM_MODEL, for side-by-side model comparison
+	// Provider reasoning control, passed through verbatim. `{"enabled":false}`
+	// forces it off, `{"effort":"medium"}` turns it on. Used by
+	// scripts/benchmark.ts to price reasoning on the same question.
+	reasoning?: Record<string, unknown>;
 }
 
 export const testRoute = new Hono<{ Bindings: Env }>();
@@ -43,6 +47,7 @@ testRoute.post("/", async (c) => {
 		threadId,
 		text,
 		model: body.model,
+		reasoning: body.reasoning,
 		persist: body.persist !== false,
 		metadata: { phone: from, source: "test-endpoint" },
 	});
