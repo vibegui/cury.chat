@@ -1,6 +1,6 @@
 {
   "ranAt": "2026-09-07",
-  "judge": "anthropic/claude-opus-5",
+  "judge": "Claude Opus 5 (assistente do projeto, lote cego)",
   "questions": [
     {
       "id": "seguranca",
@@ -150,65 +150,6 @@
     "concisao": 0.1
   },
   "baseline": [
-    {
-      "key": "deepseek/deepseek-v4-flash",
-      "id": "deepseek/deepseek-v4-flash",
-      "label": "DeepSeek V4 Flash",
-      "tier": "open-budget",
-      "arm": "producao",
-      "maxTokens": 1024,
-      "reasoning": "padrão do modelo",
-      "n": 13,
-      "score": 92.2,
-      "dims": {
-        "fidelidade": 4.08,
-        "conformidade": 5,
-        "utilidade": 4.46,
-        "concisao": 4.92
-      },
-      "hardFails": 1,
-      "hardFailIds": [
-        "saude"
-      ],
-      "costPerTurn": 0.0010495,
-      "costMeasured": 0.0013955,
-      "inTokens": 11163,
-      "outTokens": 341,
-      "reasoningTokens": 222,
-      "latencyMs": 8135,
-      "empties": 0,
-      "errors": 0
-    },
-    {
-      "key": "openai/gpt-oss-120b",
-      "id": "openai/gpt-oss-120b",
-      "label": "gpt-oss-120b",
-      "tier": "open-medio",
-      "arm": "producao",
-      "maxTokens": 1024,
-      "reasoning": "padrão do modelo",
-      "n": 13,
-      "score": 80.6,
-      "dims": {
-        "fidelidade": 3.23,
-        "conformidade": 4.85,
-        "utilidade": 3.62,
-        "concisao": 4
-      },
-      "hardFails": 2,
-      "hardFailIds": [
-        "seguranca",
-        "saude"
-      ],
-      "costPerTurn": 0.0004207,
-      "costMeasured": 0.000672,
-      "inTokens": 9741,
-      "outTokens": 354,
-      "reasoningTokens": 244,
-      "latencyMs": 13116,
-      "empties": 0,
-      "errors": 0
-    },
     {
       "key": "openai/gpt-5.5",
       "id": "openai/gpt-5.5",
@@ -372,9 +313,63 @@
       "errors": 0
     },
     {
+      "key": "openai/gpt-oss-120b",
+      "id": "openai/gpt-oss-120b",
+      "label": "gpt-oss-120b",
+      "tier": "open-medio",
+      "arm": "producao",
+      "maxTokens": 1024,
+      "reasoning": "padrão do modelo",
+      "n": 0,
+      "score": 0,
+      "dims": {
+        "fidelidade": 0,
+        "conformidade": 0,
+        "utilidade": 0,
+        "concisao": 0
+      },
+      "hardFails": 0,
+      "hardFailIds": [],
+      "costPerTurn": 0,
+      "costMeasured": 0,
+      "inTokens": 0,
+      "outTokens": 0,
+      "reasoningTokens": 0,
+      "latencyMs": 0,
+      "empties": 0,
+      "errors": 0
+    },
+    {
       "key": "qwen/qwen3.8-flash",
       "id": "qwen/qwen3.8-flash",
       "label": "Qwen3.8 Flash",
+      "tier": "open-budget",
+      "arm": "producao",
+      "maxTokens": 1024,
+      "reasoning": "padrão do modelo",
+      "n": 0,
+      "score": 0,
+      "dims": {
+        "fidelidade": 0,
+        "conformidade": 0,
+        "utilidade": 0,
+        "concisao": 0
+      },
+      "hardFails": 0,
+      "hardFailIds": [],
+      "costPerTurn": 0,
+      "costMeasured": 0,
+      "inTokens": 0,
+      "outTokens": 0,
+      "reasoningTokens": 0,
+      "latencyMs": 0,
+      "empties": 0,
+      "errors": 0
+    },
+    {
+      "key": "deepseek/deepseek-v4-flash",
+      "id": "deepseek/deepseek-v4-flash",
+      "label": "DeepSeek V4 Flash",
       "tier": "open-budget",
       "arm": "producao",
       "maxTokens": 1024,
@@ -624,26 +619,22 @@
       "arm": "t4096",
       "maxTokens": 4096,
       "reasoning": "padrão do modelo",
-      "n": 13,
-      "score": 84.2,
+      "n": 0,
+      "score": 0,
       "dims": {
-        "fidelidade": 3.46,
-        "conformidade": 4.92,
-        "utilidade": 3.92,
-        "concisao": 4.15
+        "fidelidade": 0,
+        "conformidade": 0,
+        "utilidade": 0,
+        "concisao": 0
       },
-      "hardFails": 3,
-      "hardFailIds": [
-        "seguranca",
-        "educacao",
-        "saude"
-      ],
-      "costPerTurn": 0.0004116,
-      "costMeasured": 0.0006459,
-      "inTokens": 9743,
-      "outTokens": 300,
-      "reasoningTokens": 210,
-      "latencyMs": 8950,
+      "hardFails": 0,
+      "hardFailIds": [],
+      "costPerTurn": 0,
+      "costMeasured": 0,
+      "inTokens": 0,
+      "outTokens": 0,
+      "reasoningTokens": 0,
+      "latencyMs": 0,
       "empties": 0,
       "errors": 0
     },
@@ -655,26 +646,24 @@
       "arm": "r-off",
       "maxTokens": 1024,
       "reasoning": "{\"enabled\":false}",
-      "n": 13,
-      "score": 19.7,
+      "n": 0,
+      "score": 0,
       "dims": {
-        "fidelidade": 0.31,
-        "conformidade": 2.23,
+        "fidelidade": 0,
+        "conformidade": 0,
         "utilidade": 0,
         "concisao": 0
       },
-      "hardFails": 1,
-      "hardFailIds": [
-        "risco"
-      ],
+      "hardFails": 0,
+      "hardFailIds": [],
       "costPerTurn": 0,
       "costMeasured": 0,
       "inTokens": 0,
       "outTokens": 0,
       "reasoningTokens": 0,
-      "latencyMs": 592,
-      "empties": 13,
-      "errors": 13
+      "latencyMs": 0,
+      "empties": 0,
+      "errors": 0
     },
     {
       "key": "openai/gpt-oss-120b#r-high+t4096",
@@ -684,24 +673,22 @@
       "arm": "r-high+t4096",
       "maxTokens": 4096,
       "reasoning": "{\"effort\":\"high\"}",
-      "n": 13,
-      "score": 88.8,
+      "n": 0,
+      "score": 0,
       "dims": {
-        "fidelidade": 3.92,
-        "conformidade": 5,
-        "utilidade": 4.15,
-        "concisao": 4.31
+        "fidelidade": 0,
+        "conformidade": 0,
+        "utilidade": 0,
+        "concisao": 0
       },
-      "hardFails": 1,
-      "hardFailIds": [
-        "saude"
-      ],
-      "costPerTurn": 0.0005192,
-      "costMeasured": 0.0010135,
-      "inTokens": 9743,
-      "outTokens": 934,
-      "reasoningTokens": 804,
-      "latencyMs": 15902,
+      "hardFails": 0,
+      "hardFailIds": [],
+      "costPerTurn": 0,
+      "costMeasured": 0,
+      "inTokens": 0,
+      "outTokens": 0,
+      "reasoningTokens": 0,
+      "latencyMs": 0,
       "empties": 0,
       "errors": 0
     },
@@ -794,25 +781,22 @@
       "arm": "t4096",
       "maxTokens": 4096,
       "reasoning": "padrão do modelo",
-      "n": 13,
-      "score": 91.1,
+      "n": 0,
+      "score": 0,
       "dims": {
-        "fidelidade": 4,
-        "conformidade": 4.92,
-        "utilidade": 4.54,
-        "concisao": 4.77
+        "fidelidade": 0,
+        "conformidade": 0,
+        "utilidade": 0,
+        "concisao": 0
       },
-      "hardFails": 2,
-      "hardFailIds": [
-        "educacao",
-        "saude"
-      ],
-      "costPerTurn": 0.0010566,
-      "costMeasured": 0.0011208,
-      "inTokens": 11175,
-      "outTokens": 375,
-      "reasoningTokens": 249,
-      "latencyMs": 10743,
+      "hardFails": 0,
+      "hardFailIds": [],
+      "costPerTurn": 0,
+      "costMeasured": 0,
+      "inTokens": 0,
+      "outTokens": 0,
+      "reasoningTokens": 0,
+      "latencyMs": 0,
       "empties": 0,
       "errors": 0
     },
@@ -824,25 +808,22 @@
       "arm": "r-off",
       "maxTokens": 1024,
       "reasoning": "{\"enabled\":false}",
-      "n": 13,
-      "score": 91.1,
+      "n": 0,
+      "score": 0,
       "dims": {
-        "fidelidade": 3.92,
-        "conformidade": 5,
-        "utilidade": 4.54,
-        "concisao": 4.69
+        "fidelidade": 0,
+        "conformidade": 0,
+        "utilidade": 0,
+        "concisao": 0
       },
-      "hardFails": 2,
-      "hardFailIds": [
-        "saude",
-        "corrupcao"
-      ],
-      "costPerTurn": 0.0010092,
-      "costMeasured": 0.0008901,
-      "inTokens": 11163,
-      "outTokens": 114,
+      "hardFails": 0,
+      "hardFailIds": [],
+      "costPerTurn": 0,
+      "costMeasured": 0,
+      "inTokens": 0,
+      "outTokens": 0,
       "reasoningTokens": 0,
-      "latencyMs": 7646,
+      "latencyMs": 0,
       "empties": 0,
       "errors": 0
     },
@@ -854,25 +835,22 @@
       "arm": "r-high+t4096",
       "maxTokens": 4096,
       "reasoning": "{\"effort\":\"high\"}",
-      "n": 13,
-      "score": 90,
+      "n": 0,
+      "score": 0,
       "dims": {
-        "fidelidade": 3.85,
-        "conformidade": 5,
-        "utilidade": 4.38,
-        "concisao": 4.69
+        "fidelidade": 0,
+        "conformidade": 0,
+        "utilidade": 0,
+        "concisao": 0
       },
-      "hardFails": 2,
-      "hardFailIds": [
-        "saude",
-        "corrupcao"
-      ],
-      "costPerTurn": 0.0010571,
-      "costMeasured": 0.0005036,
-      "inTokens": 11169,
-      "outTokens": 381,
-      "reasoningTokens": 242,
-      "latencyMs": 11522,
+      "hardFails": 0,
+      "hardFailIds": [],
+      "costPerTurn": 0,
+      "costMeasured": 0,
+      "inTokens": 0,
+      "outTokens": 0,
+      "reasoningTokens": 0,
+      "latencyMs": 0,
       "empties": 0,
       "errors": 0
     },
@@ -958,12 +936,7 @@
       "errors": 0
     }
   ],
-  "frontier": [
-    "openai/gpt-oss-120b#t4096",
-    "openai/gpt-oss-120b#r-high+t4096",
-    "deepseek/deepseek-v4-flash#r-off",
-    "deepseek/deepseek-v4-flash"
-  ],
-  "recommended": "openai/gpt-oss-120b#t4096",
-  "ceiling": 92.2
+  "frontier": [],
+  "recommended": null,
+  "ceiling": null
 }

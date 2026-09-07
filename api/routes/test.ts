@@ -27,8 +27,8 @@ interface TestRequest {
 	// forces it off, `{"effort":"medium"}` turns it on. Used by
 	// scripts/benchmark.ts to price reasoning on the same question.
 	reasoning?: Record<string, unknown>;
-	// Output-token ceiling, overriding the 1024 production uses. The benchmark
-	// raises it to find out whether truncation, not capability, is what makes a
+	// Output-token ceiling, overriding the default in gateway.ts. The benchmark
+	// moves it to find out whether truncation, not capability, is what makes a
 	// reasoning model come back empty.
 	maxTokens?: number;
 	// Devolve o bloco <context> literal. Só o benchmark usa — ver turn.ts.

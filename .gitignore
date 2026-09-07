@@ -17,3 +17,7 @@ worker-configuration.d.ts
 # corpus downloads before conversion — only the .md is committed
 corpus/raw/
 .benchmark-runs.json
+.benchmark-judging.json
+.benchmark-verdicts.json
+.benchmark-batches/
+.benchmark-verdicts/

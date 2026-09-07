@@ -103,7 +103,22 @@ function buildRequest(
 		model,
 		messages,
 		temperature: options.temperature ?? 0.7,
-		max_tokens: options.maxTokens ?? 1024,
+		// 4096, não 1024. O teto é limite, não meta: quem responde em 300 tokens
+		// não passa a gastar mais porque ele subiu — medido, o custo por turno do
+		// modelo em produção foi de $1.05 para $1.06 por mil turnos.
+		//
+		// O que 1024 fazia era estrangular todo modelo que raciocina antes de
+		// responder: ele gastava o teto pensando e devolvia conteúdo vazio. Medido
+		// nas mesmas 13 perguntas, só mudando este número:
+		//
+		//   GLM-5.3 Flash   67.4 → 95.4   (3 respostas vazias → 0)
+		//   Kimi K2.6       46.0 → 86.5   (6 vazias → 0)
+		//   Qwen3.8 Flash   64.8 → 82.8   (4 vazias → 1)
+		//
+		// Resposta vazia é o defeito que deixou seis mensagens sem resposta no
+		// WhatsApp — ver EmptyCompletionError abaixo. Este número era uma das
+		// causas. Ver /benchmark e scripts/benchmark.ts.
+		max_tokens: options.maxTokens ?? 4096,
 		...(options.reasoning ? { reasoning: options.reasoning } : {}),
 		...(stream
 			? // Without include_usage the final chunk carries no token counts, and
