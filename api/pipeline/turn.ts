@@ -26,6 +26,8 @@ export interface RunTurnInput {
 	memory?: string;
 	/** Provider reasoning control. Only /test sets it — see the benchmark. */
 	reasoning?: Record<string, unknown>;
+	/** Output-token ceiling. Only /test sets it — see the benchmark. */
+	maxTokens?: number;
 }
 
 export interface RunTurnResult {
@@ -70,6 +72,7 @@ async function prepare(env: Env, input: RunTurnInput) {
 			recipientName: input.name,
 			memory: input.memory,
 			reasoning: input.reasoning,
+			maxTokens: input.maxTokens,
 			metadata: { threadId: input.threadId, ...input.metadata },
 		},
 	};

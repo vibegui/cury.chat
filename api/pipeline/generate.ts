@@ -23,6 +23,8 @@ export interface GenerateInput {
 	metadata?: Record<string, string>;
 	/** Passed straight to the provider. Set by the benchmark, not by the app. */
 	reasoning?: Record<string, unknown>;
+	/** Output-token ceiling. Only the benchmark moves it; production uses the default. */
+	maxTokens?: number;
 }
 
 export interface GenerateResult {
@@ -55,6 +57,7 @@ export async function generate(env: Env, input: GenerateInput): Promise<Generate
 		metadata: input.metadata,
 		model: input.model,
 		reasoning: input.reasoning,
+		maxTokens: input.maxTokens,
 	});
 
 	return {

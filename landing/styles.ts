@@ -171,5 +171,62 @@ ul.topic-list a:hover { background: var(--accent-soft); }
 ul.topic-list .what { display: block; font-weight: 700; color: var(--ink); }
 ul.topic-list .meta { display: block; font-size: 14.5px; color: var(--ink-soft); margin-top: 2px; text-wrap: pretty; }
 
+/* ---- /benchmark ---------------------------------------------------------- */
+
+/* A tabela é o conteúdo desta página; num telefone ela rola na horizontal em
+   vez de virar cartões empilhados, porque a comparação entre linhas é o que a
+   pessoa veio ver e empilhar destrói exatamente isso. */
+.table-wrap { margin: 26px -20px 0; padding: 0 20px; overflow-x: auto; }
+table.bench {
+  border-collapse: collapse; width: 100%; min-width: 720px;
+  font-variant-numeric: tabular-nums; font-size: 14.5px;
+}
+table.bench th, table.bench td { padding: 11px 10px; text-align: left; }
+table.bench thead th {
+  font-size: 12px; font-weight: 700; color: var(--faint);
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+table.bench thead tr.sub th { padding-top: 0; font-weight: 600; }
+table.bench tbody tr { border-bottom: 1px solid var(--line); }
+table.bench tbody tr:last-child { border-bottom: none; }
+table.bench .num { text-align: right; font-variant-numeric: tabular-nums; }
+table.bench .strong { font-weight: 750; color: var(--ink); }
+table.bench .rank { color: var(--faint); width: 1%; padding-right: 0; }
+table.bench .tier { color: var(--ink-soft); white-space: nowrap; font-size: 13.5px; }
+table.bench .model { font-weight: 650; color: var(--ink); }
+table.bench .slug { display: block; font-size: 12px; font-weight: 400; color: var(--faint); margin-top: 1px; }
+table.bench tr.chosen { background: var(--accent-soft); }
+table.bench tr.chosen td:first-child { border-radius: 8px 0 0 8px; }
+table.bench tr.chosen td:last-child { border-radius: 0 8px 8px 0; }
+.badge {
+  font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--accent-ink); background: var(--accent); border-radius: 999px; padding: 2px 7px;
+  vertical-align: 1px; white-space: nowrap;
+}
+.hf { font-weight: 750; color: oklch(0.55 0.16 25); cursor: help; }
+@media (prefers-color-scheme: dark) { .hf { color: oklch(0.75 0.15 25); } }
+.up { color: var(--accent); }
+.down { color: var(--faint); }
+
+.verdict {
+  margin-top: 30px; padding: 20px 22px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--line);
+  font-size: 16.5px; line-height: 1.6; text-wrap: pretty;
+}
+.verdict strong { display: block; margin-bottom: 5px; }
+
+.footnote { margin-top: 14px; font-size: 14px; color: var(--faint); text-wrap: pretty; }
+ul.limits { list-style: none; display: grid; gap: 10px; margin-top: 8px; }
+ul.limits li { padding-left: 24px; position: relative; color: var(--ink-soft); text-wrap: pretty; }
+ul.limits li::before { content: "×"; position: absolute; left: 4px; color: var(--faint); font-weight: 700; }
+
+.qwrap h3 { margin-top: 20px; color: var(--ink); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+ul.qlist { list-style: none; display: grid; gap: 14px; margin-top: 10px; }
+ul.qlist li { display: grid; gap: 3px; }
+ul.qlist .q { color: var(--ink); font-weight: 600; }
+ul.qlist .e, ul.qlist .f { color: var(--faint); font-size: 13px; }
+
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+
 a.brand { text-decoration: none; color: inherit; }
 `;

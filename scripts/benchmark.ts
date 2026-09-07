@@ -53,9 +53,11 @@ interface Candidate {
 	id: string;
 	label: string;
 	tier: Tier;
-	/** Only set for the reasoning study — otherwise the model's own default. */
+	/** Unset means the model's own default, which is what production sends. */
 	reasoning?: Record<string, unknown>;
-	/** Distinguishes the arms of the reasoning study in the results. */
+	/** Unset means the 1024 production uses. */
+	maxTokens?: number;
+	/** Unset means the baseline arm: exactly what a visitor gets today. */
 	arm?: string;
 }
 
@@ -78,22 +80,38 @@ const ROSTER: Candidate[] = [
 	{ id: "z-ai/glm-5.3-flash", label: "GLM-5.3 Flash", tier: "open-budget" },
 ];
 
-// Reasoning study: same questions, same pipeline, only the toggle moves. Run on
-// the budget tier because that is where the answer changes a decision — nobody
-// is going to pay frontier prices here either way.
-const REASONING_STUDY: Candidate[] = [
-	"deepseek/deepseek-v4-flash",
-	"z-ai/glm-5.3-flash",
-	"qwen/qwen3.8-flash",
-].flatMap((id) => {
-	const base = ROSTER.find((m) => m.id === id) as Candidate;
-	return [
-		{ ...base, arm: "sem-reasoning", reasoning: { enabled: false } },
-		{ ...base, arm: "com-reasoning", reasoning: { effort: "high" } },
-	];
+// The sweep. The baseline above only says which model is best at the settings
+// this site happens to run today; it does not say those settings are right.
+// Three knobs move here, on every model cheap enough to actually deploy:
+//
+//   t4096          more room to answer — does truncation, not capability,
+//                  explain the empty replies?
+//   r-off          reasoning forced off — is it worth what it costs?
+//   r-high+t4096   reasoning at maximum with room to use it — the ceiling.
+//
+// The frontier models are left out on purpose. At $28–$48 per thousand turns
+// they are reference points, not options, and sweeping their settings would
+// spend real money to refine a number nobody will act on.
+const SWEEPABLE = ROSTER.filter((m) => m.tier !== "frontier");
+
+/** Model has no reasoning knob at all — skip those arms rather than fake them. */
+const NO_REASONING = new Set(["qwen/qwen3-max"]);
+
+const SWEEP: Candidate[] = SWEEPABLE.flatMap((m) => {
+	const arms: Candidate[] = [{ ...m, arm: "t4096", maxTokens: 4096 }];
+	if (!NO_REASONING.has(m.id)) {
+		arms.push({ ...m, arm: "r-off", reasoning: { enabled: false } });
+		arms.push({
+			...m,
+			arm: "r-high+t4096",
+			reasoning: { effort: "high" },
+			maxTokens: 4096,
+		});
+	}
+	return arms;
 });
 
-const ALL: Candidate[] = [...ROSTER, ...REASONING_STUDY];
+const ALL: Candidate[] = [...ROSTER, ...SWEEP];
 
 const key = (c: Candidate, q: string) => `${c.id}${c.arm ? `#${c.arm}` : ""}|${q}`;
 
@@ -324,11 +342,13 @@ async function runOne(c: Candidate, q: Question): Promise<Run> {
 				text: q.text,
 				model: c.id,
 				reasoning: c.reasoning,
+				maxTokens: c.maxTokens,
 				persist: false,
 			}),
 		});
 		const body: any = await res.json();
-		if (!res.ok || body.error) return { ...base, latencyMs: Date.now() - started, error: String(body.error ?? res.status) };
+		if (!res.ok || body.error)
+			return { ...base, latencyMs: Date.now() - started, error: String(body.error ?? res.status) };
 
 		const u = body.usage ?? {};
 		return {
@@ -551,17 +571,24 @@ function aggregate(c: Candidate) {
 	const lat = rows.map((r) => r.run.latencyMs);
 
 	return {
+		key: `${c.id}${c.arm ? `#${c.arm}` : ""}`,
 		id: c.id,
 		label: c.label,
 		tier: c.tier,
-		arm: c.arm,
+		arm: c.arm ?? "producao",
+		maxTokens: c.maxTokens ?? 1024,
+		reasoning: c.reasoning ? JSON.stringify(c.reasoning) : "padrão do modelo",
 		n: rows.length,
 		score: Number(total.toFixed(1)),
 		dims: Object.fromEntries(Object.entries(dims).map(([k, v]) => [k, Number(v.toFixed(2))])),
 		hardFails: hardFails.length,
 		hardFailIds: hardFails.map((r) => r.q.id),
-		costPerTurn: costs.length ? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(6)) : 0,
-		outTokens: Math.round(rows.reduce((a, r) => a + r.run.completionTokens, 0) / (rows.length || 1)),
+		costPerTurn: costs.length
+			? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(6))
+			: 0,
+		outTokens: Math.round(
+			rows.reduce((a, r) => a + r.run.completionTokens, 0) / (rows.length || 1),
+		),
 		reasoningTokens: Math.round(
 			rows.reduce((a, r) => a + r.run.reasoningTokens, 0) / (rows.length || 1),
 		),
@@ -571,8 +598,48 @@ function aggregate(c: Candidate) {
 	};
 }
 
-const results = ROSTER.map(aggregate).sort((a, b) => b.score - a.score);
-const reasoning = REASONING_STUDY.map(aggregate);
+type Agg = ReturnType<typeof aggregate>;
+
+const baseline: Agg[] = ROSTER.map(aggregate).sort((a, b) => b.score - a.score);
+const sweep: Agg[] = SWEEP.map(aggregate);
+const all: Agg[] = [...baseline, ...sweep].filter((a) => a.n > 0);
+
+/**
+ * A fronteira de Pareto: nenhuma outra configuração é ao mesmo tempo melhor e
+ * mais barata. É a resposta honesta para "melhor custo-benefício" — qualquer
+ * ponto fora dela é dominado, e escolher um deles seria pagar mais por menos.
+ *
+ * Uma configuração que devolve resposta vazia está fora por construção. Não é
+ * um ponto ruim na curva: é um produto que às vezes não responde.
+ */
+function pareto(points: Agg[]): Agg[] {
+	const usable = points.filter((p) => p.empties === 0 && p.errors === 0);
+	return usable
+		.filter(
+			(p) =>
+				!usable.some(
+					(q) =>
+						q !== p &&
+						q.score >= p.score &&
+						q.costPerTurn <= p.costPerTurn &&
+						(q.score > p.score || q.costPerTurn < p.costPerTurn),
+				),
+		)
+		.sort((a, b) => a.costPerTurn - b.costPerTurn);
+}
+
+const frontier = pareto(all);
+
+/**
+ * A recomendação. O ponto mais barato da fronteira que não comete falha grave
+ * e chega a 90% da melhor nota vista — abaixo disso a economia deixa de ser
+ * economia e vira defeito visível para quem pergunta.
+ */
+const ceiling = Math.max(...all.map((a) => a.score));
+const recommended =
+	frontier.find((p) => p.hardFails === 0 && p.score >= ceiling * 0.9) ??
+	frontier.find((p) => p.hardFails === 0) ??
+	frontier[0];
 
 writeFileSync(
 	OUT,
@@ -588,21 +655,30 @@ writeFileSync(
 				hardFail,
 			})),
 			weights: WEIGHTS,
-			results,
-			reasoning,
+			baseline,
+			sweep,
+			frontier: frontier.map((f) => f.key),
+			recommended: recommended?.key ?? null,
+			ceiling: Number(ceiling.toFixed(1)),
 		},
 		null,
 		2,
 	)}\n`,
 );
 
-console.log(`\n${"MODELO".padEnd(22)} ${"TIER".padEnd(12)} NOTA   FID  CONF UTIL BREV  HF  $/TURNO`);
-for (const r of results) {
-	console.log(
-		`${r.label.padEnd(22)} ${r.tier.padEnd(12)} ${String(r.score).padStart(5)}  ` +
-			`${r.dims.fidelidade.toFixed(1)}  ${r.dims.conformidade.toFixed(1)}  ${r.dims.utilidade.toFixed(1)}  ` +
-			`${r.dims.concisao.toFixed(1)}  ${String(r.hardFails).padStart(2)}  $${r.costPerTurn.toFixed(5)}`,
-	);
-}
+const fmt = (r: Agg) =>
+	`${r.label.padEnd(20)} ${r.arm.padEnd(14)} ${String(r.score).padStart(5)}  ` +
+	`${r.dims.fidelidade.toFixed(1)} ${r.dims.conformidade.toFixed(1)} ${r.dims.utilidade.toFixed(1)} ${r.dims.concisao.toFixed(1)}  ` +
+	`${String(r.hardFails).padStart(2)}  ${String(r.empties).padStart(2)}  $${(r.costPerTurn * 1000).toFixed(2).padStart(6)}  ${(r.latencyMs / 1000).toFixed(1)}s`;
 
+console.log(
+	`\n${"MODELO".padEnd(20)} ${"CONFIG".padEnd(14)} NOTA   F   C   U   B  HF  VZ   $/1k   LAT`,
+);
+console.log("-".repeat(96));
+for (const r of [...all].sort((a, b) => b.score - a.score)) console.log(fmt(r));
+
+console.log(`\nFRONTEIRA DE PARETO (nada é melhor E mais barato):`);
+for (const r of frontier) console.log(`  ${fmt(r)}`);
+
+console.log(`\nRECOMENDADO: ${recommended?.key ?? "—"}`);
 console.log(`\nEscrito em ${OUT}`);
