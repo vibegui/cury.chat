@@ -35,7 +35,6 @@ import { CACHE_PAGE, CACHE_TEXT, serveStatic, staticAsset } from "./lib/static-a
 import { chatRoute } from "./routes/chat.ts";
 import { mcpRoute } from "./routes/mcp.ts";
 import { testRoute } from "./routes/test.ts";
-import { benchmarkRoute } from "./routes/benchmark.ts";
 import { publishedTopics, topicsRoute } from "./routes/topics.ts";
 import { tyxterWebhookRoute } from "./routes/tyxter-webhook.ts";
 import { webhookRoute } from "./routes/webhook.ts";
@@ -86,7 +85,6 @@ ${publishedTopics()
 			`  <url><loc>https://cury.chat/tema/${t.slug}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`,
 	)
 	.join("\n")}
-  <url><loc>https://cury.chat/benchmark</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://cury.chat/patrimonio</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
 </urlset>`,
 		type: "application/xml",
@@ -151,7 +149,6 @@ app.route("/tyxter/webhook", tyxterWebhookRoute);
 // front door for anyone who clicks "falar pela web". Rate limits live in the
 // route itself.
 app.route("/", topicsRoute);
-app.route("/", benchmarkRoute);
 app.route("/api/chat", chatRoute);
 
 // The chat UI itself. `/s/:shareId` serves the same bundle — the app reads the

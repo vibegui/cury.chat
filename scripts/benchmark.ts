@@ -347,7 +347,8 @@ async function runOne(c: Candidate, q: Question): Promise<Run> {
 			}),
 		});
 		const body: any = await res.json();
-		if (!res.ok || body.error) return { ...base, latencyMs: Date.now() - started, error: String(body.error ?? res.status) };
+		if (!res.ok || body.error)
+			return { ...base, latencyMs: Date.now() - started, error: String(body.error ?? res.status) };
 
 		const u = body.usage ?? {};
 		return {
@@ -582,8 +583,12 @@ function aggregate(c: Candidate) {
 		dims: Object.fromEntries(Object.entries(dims).map(([k, v]) => [k, Number(v.toFixed(2))])),
 		hardFails: hardFails.length,
 		hardFailIds: hardFails.map((r) => r.q.id),
-		costPerTurn: costs.length ? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(6)) : 0,
-		outTokens: Math.round(rows.reduce((a, r) => a + r.run.completionTokens, 0) / (rows.length || 1)),
+		costPerTurn: costs.length
+			? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(6))
+			: 0,
+		outTokens: Math.round(
+			rows.reduce((a, r) => a + r.run.completionTokens, 0) / (rows.length || 1),
+		),
 		reasoningTokens: Math.round(
 			rows.reduce((a, r) => a + r.run.reasoningTokens, 0) / (rows.length || 1),
 		),
@@ -610,7 +615,16 @@ const all: Agg[] = [...baseline, ...sweep].filter((a) => a.n > 0);
 function pareto(points: Agg[]): Agg[] {
 	const usable = points.filter((p) => p.empties === 0 && p.errors === 0);
 	return usable
-		.filter((p) => !usable.some((q) => q !== p && q.score >= p.score && q.costPerTurn <= p.costPerTurn && (q.score > p.score || q.costPerTurn < p.costPerTurn)))
+		.filter(
+			(p) =>
+				!usable.some(
+					(q) =>
+						q !== p &&
+						q.score >= p.score &&
+						q.costPerTurn <= p.costPerTurn &&
+						(q.score > p.score || q.costPerTurn < p.costPerTurn),
+				),
+		)
 		.sort((a, b) => a.costPerTurn - b.costPerTurn);
 }
 
@@ -657,7 +671,9 @@ const fmt = (r: Agg) =>
 	`${r.dims.fidelidade.toFixed(1)} ${r.dims.conformidade.toFixed(1)} ${r.dims.utilidade.toFixed(1)} ${r.dims.concisao.toFixed(1)}  ` +
 	`${String(r.hardFails).padStart(2)}  ${String(r.empties).padStart(2)}  $${(r.costPerTurn * 1000).toFixed(2).padStart(6)}  ${(r.latencyMs / 1000).toFixed(1)}s`;
 
-console.log(`\n${"MODELO".padEnd(20)} ${"CONFIG".padEnd(14)} NOTA   F   C   U   B  HF  VZ   $/1k   LAT`);
+console.log(
+	`\n${"MODELO".padEnd(20)} ${"CONFIG".padEnd(14)} NOTA   F   C   U   B  HF  VZ   $/1k   LAT`,
+);
 console.log("-".repeat(96));
 for (const r of [...all].sort((a, b) => b.score - a.score)) console.log(fmt(r));
 

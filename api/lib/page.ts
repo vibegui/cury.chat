@@ -66,8 +66,7 @@ export const HEADER = `<header>
 export const FOOTER = `<footer>
   <div class="wrap">
     <p><b>cury.chat</b> — projeto independente, sem vínculo com Augusto Cury, com a campanha ou com o Avante.</p>
-    <p>Respostas geradas por inteligência artificial a partir de fontes públicas. Podem conter erros — confira na fonte. <a href="/benchmark">Como escolhemos o modelo</a>.</p>
+    <p>Respostas geradas por inteligência artificial a partir de fontes públicas. Podem conter erros — confira na fonte.</p>
     <p>Em sofrimento? <b>CVV 188</b>, gratuito, 24 horas.</p>
   </div>
 </footer>`;
-
