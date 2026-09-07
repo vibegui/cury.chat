@@ -31,8 +31,11 @@ interface TestRequest {
 	// raises it to find out whether truncation, not capability, is what makes a
 	// reasoning model come back empty.
 	maxTokens?: number;
+<<<<<<< HEAD
 	// Devolve o bloco <context> literal. Só o benchmark usa — ver turn.ts.
 	includeContext?: boolean;
+=======
+>>>>>>> origin/main
 }
 
 export const testRoute = new Hono<{ Bindings: Env }>();
@@ -55,7 +58,10 @@ testRoute.post("/", async (c) => {
 		model: body.model,
 		reasoning: body.reasoning,
 		maxTokens: body.maxTokens,
+<<<<<<< HEAD
 		includeContext: body.includeContext,
+=======
+>>>>>>> origin/main
 		persist: body.persist !== false,
 		metadata: { phone: from, source: "test-endpoint" },
 	});
