@@ -21,6 +21,8 @@ export interface GenerateInput {
 	// when there's no cross-day history yet.
 	memory?: string;
 	metadata?: Record<string, string>;
+	/** Passed straight to the provider. Set by the benchmark, not by the app. */
+	reasoning?: Record<string, unknown>;
 }
 
 export interface GenerateResult {
@@ -52,6 +54,7 @@ export async function generate(env: Env, input: GenerateInput): Promise<Generate
 	const result = await chat(env, messages, {
 		metadata: input.metadata,
 		model: input.model,
+		reasoning: input.reasoning,
 	});
 
 	return {

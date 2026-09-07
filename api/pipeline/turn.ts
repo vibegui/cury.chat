@@ -24,6 +24,8 @@ export interface RunTurnInput {
 	persist?: boolean;
 	/** Prepended memory block, when the caller keeps one (WhatsApp does). */
 	memory?: string;
+	/** Provider reasoning control. Only /test sets it — see the benchmark. */
+	reasoning?: Record<string, unknown>;
 }
 
 export interface RunTurnResult {
@@ -67,6 +69,7 @@ async function prepare(env: Env, input: RunTurnInput) {
 			citations,
 			recipientName: input.name,
 			memory: input.memory,
+			reasoning: input.reasoning,
 			metadata: { threadId: input.threadId, ...input.metadata },
 		},
 	};

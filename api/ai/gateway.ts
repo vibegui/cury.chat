@@ -74,6 +74,13 @@ export interface ChatCompletionOptions {
 	temperature?: number;
 	maxTokens?: number;
 	metadata?: Record<string, string | number | undefined>;
+	/**
+	 * OpenRouter's reasoning control, passed through verbatim:
+	 * `{ enabled: false }` to force it off, `{ effort: "medium" }` to turn it
+	 * on. Only the benchmark sets it — production leaves the model's default,
+	 * which is what a visitor actually gets.
+	 */
+	reasoning?: Record<string, unknown>;
 }
 
 /**
@@ -97,6 +104,7 @@ function buildRequest(
 		messages,
 		temperature: options.temperature ?? 0.7,
 		max_tokens: options.maxTokens ?? 1024,
+		...(options.reasoning ? { reasoning: options.reasoning } : {}),
 		...(stream
 			? // Without include_usage the final chunk carries no token counts, and
 				// the turn would be stored with no cost — invisible in the dashboard.
