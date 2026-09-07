@@ -4,6 +4,7 @@
 //   bun run benchmark              # resume; only runs what is missing
 //   bun run benchmark --fresh      # discard the checkpoint and start over
 //   bun run benchmark --judge-only # re-judge answers already collected
+//   bun run benchmark --only=oss,deepseek   # só os modelos que casarem
 //
 // Design decisions, and why each one:
 //
@@ -484,11 +485,18 @@ function save(state: State) {
 
 const state = load();
 
-const pending = ALL.flatMap((c) => QUESTIONS.map((q) => ({ c, q }))).filter(
-	({ c, q }) => !state.runs[key(c, q.id)] && !process.argv.includes("--judge-only"),
-);
+// Filtro de linha de comando. Existe porque a bateria inteira leva horas e
+// uma pergunta específica ("esta configuração é mais barata que aquela?") não
+// deveria esperar por ela.
+const onlyArg = process.argv.find((a) => a.startsWith("--only="))?.slice(7);
+const only = onlyArg ? onlyArg.split(",").map((s) => s.trim().toLowerCase()) : null;
+const matches = (c: Candidate) => !only || only.some((f) => c.id.toLowerCase().includes(f));
 
-console.log(`${ALL.length} configurações × ${QUESTIONS.length} perguntas`);
+const pending = ALL.filter(matches)
+	.flatMap((c) => QUESTIONS.map((q) => ({ c, q })))
+	.filter(({ c, q }) => !state.runs[key(c, q.id)] && !process.argv.includes("--judge-only"));
+
+console.log(`${ALL.filter(matches).length} configurações × ${QUESTIONS.length} perguntas`);
 console.log(`${pending.length} respostas a coletar (${Object.keys(state.runs).length} em cache)\n`);
 
 let done = 0;
@@ -505,9 +513,9 @@ await pool(pending, 4, async ({ c, q }) => {
 });
 save(state);
 
-const toJudge = ALL.flatMap((c) => QUESTIONS.map((q) => ({ c, q }))).filter(
-	({ c, q }) => state.runs[key(c, q.id)] && !state.scores[key(c, q.id)],
-);
+const toJudge = ALL.filter(matches)
+	.flatMap((c) => QUESTIONS.map((q) => ({ c, q })))
+	.filter(({ c, q }) => state.runs[key(c, q.id)] && !state.scores[key(c, q.id)]);
 
 console.log(`\n${toJudge.length} respostas a julgar com ${JUDGE_MODEL}\n`);
 
