@@ -49,6 +49,18 @@ async function main() {
 		process.exit(1);
 	}
 
+	// wrangler treats the object path as a URL, so these characters do not
+	// survive the trip: the key gets truncated at the first `?` and the rest is
+	// form-encoded. It fails silently — the upload reports success and the
+	// mangled key is only visible later, printed as a citation.
+	const unsafe = files.filter((f) => /[?#%+]/.test(f));
+	if (unsafe.length > 0) {
+		console.error("These filenames would be mangled into the R2 key:");
+		for (const f of unsafe) console.error(`  ${f}`);
+		console.error("Rename them (see filename() in scripts/fetch-corpus.ts) and run again.");
+		process.exit(1);
+	}
+
 	console.log(`Uploading ${files.length} files to r2://${BUCKET}/ …`);
 
 	for (const { name: file, path } of entries) {
