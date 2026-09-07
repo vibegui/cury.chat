@@ -117,7 +117,37 @@ const SWEEP: Candidate[] = SWEEPABLE.flatMap((m) => {
 
 const ALL: Candidate[] = [...ROSTER, ...SWEEP];
 
-const key = (c: Candidate, q: string) => `${c.id}${c.arm ? `#${c.arm}` : ""}|${q}`;
+/**
+ * As configurações que valem repetir.
+ *
+ * Uma passada por pergunta não distingue "melhor" de "teve sorte": a primeira
+ * rodada separou o primeiro do quarto colocado por 4 pontos, o que não sobrevive
+ * a uma segunda rodada se a variância for dessa ordem — e ninguém tinha medido a
+ * variância. Estas rodam três vezes; o resto continua com uma passada e fica
+ * declarado como tal.
+ */
+const SHORTLIST = new Set([
+	"z-ai/glm-5.3-flash#t4096",
+	"deepseek/deepseek-v4-flash#r-high+t4096",
+	"deepseek/deepseek-v4-flash#t4096",
+	"deepseek/deepseek-v4-flash",
+	"anthropic/claude-sonnet-5",
+]);
+
+const PASSES = Number(process.argv.find((a) => a.startsWith("--passes="))?.slice(9) ?? 1);
+
+const configKey = (c: Candidate) => `${c.id}${c.arm ? `#${c.arm}` : ""}`;
+
+/**
+ * A passada 1 não leva sufixo — as chaves gravadas antes de existirem passadas
+ * continuam válidas, e uma rodada de repetição não joga fora $2,76 de respostas
+ * já coletadas.
+ */
+const key = (c: Candidate, q: string, pass = 1) =>
+	`${configKey(c)}|${q}${pass > 1 ? `|p${pass}` : ""}`;
+
+/** Quantas passadas esta configuração merece. */
+const passesFor = (c: Candidate) => (SHORTLIST.has(configKey(c)) ? PASSES : 1);
 
 // -----------------------------------------------------------------------------
 // Price
@@ -492,6 +522,17 @@ interface JudgingBatch {
 	expects: string[];
 	hardFail: string;
 	context: string;
+	/**
+	 * O prompt do sistema, que também é evidência.
+	 *
+	 * Sem isto o julgamento erra de um jeito específico e caro: o prompt carrega
+	 * os eixos programáticos e a bibliografia, então uma resposta pode citar o
+	 * programa "Você é Insubstituível" com toda razão sem que ele apareça no
+	 * bloco recuperado. Um avaliador que só lê o `context` chama isso de
+	 * invenção — foi o que derrubou a melhor configuração da rodada anterior por
+	 * uma falha grave que não existia.
+	 */
+	systemPrompt: string;
 	answers: JudgingItem[];
 }
 
@@ -507,12 +548,14 @@ async function emitJudging(): Promise<number> {
 	for (const q of QUESTIONS) {
 		const items: JudgingItem[] = [];
 		for (const c of ALL.filter(matches)) {
-			const k = key(c, q.id);
-			const run = state.runs[k];
-			if (!run || state.scores[k]) continue;
-			const ref = refFor(k);
-			map[ref] = k;
-			items.push({ ref, reply: run.reply });
+			for (let pass = 1; pass <= passesFor(c); pass++) {
+				const k = key(c, q.id, pass);
+				const run = state.runs[k];
+				if (!run || state.scores[k]) continue;
+				const ref = refFor(k);
+				map[ref] = k;
+				items.push({ ref, reply: run.reply });
+			}
 		}
 		if (items.length === 0) continue;
 
@@ -528,6 +571,7 @@ async function emitJudging(): Promise<number> {
 			expects: q.expects,
 			hardFail: q.hardFail,
 			context: await contextFor(q),
+			systemPrompt: readFileSync(join(ROOT, "prompts", "cury-chat.md"), "utf8"),
 			answers: items,
 		};
 	}
@@ -622,19 +666,25 @@ const only = onlyArg ? onlyArg.split(",").map((s) => s.trim().toLowerCase()) : n
 const matches = (c: Candidate) => !only || only.some((f) => c.id.toLowerCase().includes(f));
 
 const pending = ALL.filter(matches)
-	.flatMap((c) => QUESTIONS.map((q) => ({ c, q })))
-	.filter(({ c, q }) => !state.runs[key(c, q.id)] && !process.argv.includes("--judge-only"));
+	.flatMap((c) =>
+		QUESTIONS.flatMap((q) =>
+			Array.from({ length: passesFor(c) }, (_, i) => ({ c, q, pass: i + 1 })),
+		),
+	)
+	.filter(
+		({ c, q, pass }) => !state.runs[key(c, q.id, pass)] && !process.argv.includes("--judge-only"),
+	);
 
 console.log(`${ALL.filter(matches).length} configurações × ${QUESTIONS.length} perguntas`);
 console.log(`${pending.length} respostas a coletar (${Object.keys(state.runs).length} em cache)\n`);
 
 let done = 0;
-await pool(pending, 4, async ({ c, q }) => {
+await pool(pending, 4, async ({ c, q, pass }) => {
 	const run = await runOne(c, q);
-	state.runs[key(c, q.id)] = run;
+	state.runs[key(c, q.id, pass)] = run;
 	done++;
 	if (done % 5 === 0) save(state);
-	const tag = `${c.label}${c.arm ? ` [${c.arm}]` : ""}`;
+	const tag = `${c.label}${c.arm ? ` [${c.arm}]` : ""}${pass > 1 ? ` #${pass}` : ""}`;
 	console.log(
 		`  ${String(done).padStart(3)}/${pending.length}  ${tag.padEnd(26)} ${q.id.padEnd(22)} ` +
 			(run.error ? `ERRO ${run.error}` : `${run.completionTokens}tok $${run.cost.toFixed(5)}`),
@@ -667,11 +717,14 @@ if (missing > 0) {
 const WEIGHTS = { fidelidade: 0.3, conformidade: 0.4, utilidade: 0.2, concisao: 0.1 };
 
 function aggregate(c: Candidate) {
-	const rows = QUESTIONS.map((q) => ({
-		q,
-		run: state.runs[key(c, q.id)],
-		score: state.scores[key(c, q.id)],
-	})).filter((r) => r.run && r.score);
+	const rows = QUESTIONS.flatMap((q) =>
+		Array.from({ length: passesFor(c) }, (_, i) => ({
+			q,
+			pass: i + 1,
+			run: state.runs[key(c, q.id, i + 1)],
+			score: state.scores[key(c, q.id, i + 1)],
+		})),
+	).filter((r) => r.run && r.score);
 
 	const avg = (pick: (s: Score) => number) =>
 		rows.length ? rows.reduce((a, r) => a + pick(r.score), 0) / rows.length : 0;
@@ -695,8 +748,29 @@ function aggregate(c: Candidate) {
 	const modeled = rows.map((r) => modelCost(c.id, r.run.promptTokens, r.run.completionTokens));
 	const lat = rows.map((r) => r.run.latencyMs);
 
+	// Nota de cada passada isolada. É o que responde "os 4 pontos são reais?" —
+	// sem isto a média esconde justamente a informação que motivou repetir.
+	const perPass = Array.from({ length: passesFor(c) }, (_, i) => {
+		const only = rows.filter((r) => r.pass === i + 1);
+		if (only.length === 0) return null;
+		const m = (pick: (s: Score) => number) =>
+			only.reduce((a, r) => a + pick(r.score), 0) / only.length;
+		return Number(
+			(
+				(m((x) => x.fidelidade) * WEIGHTS.fidelidade +
+					m((x) => x.conformidade) * WEIGHTS.conformidade +
+					m((x) => x.utilidade) * WEIGHTS.utilidade +
+					m((x) => x.concisao) * WEIGHTS.concisao) *
+				20
+			).toFixed(1),
+		);
+	}).filter((x): x is number => x !== null);
+
 	return {
 		key: `${c.id}${c.arm ? `#${c.arm}` : ""}`,
+		passes: perPass,
+		spread:
+			perPass.length > 1 ? Number((Math.max(...perPass) - Math.min(...perPass)).toFixed(1)) : 0,
 		id: c.id,
 		label: c.label,
 		tier: c.tier,

@@ -1,7 +1,7 @@
 // Pure-function tests for the AI Gateway URL builders.
 
 import { describe, expect, test } from "bun:test";
-import { compatUrl, gatewayUrl } from "../api/ai/gateway.ts";
+import { chat, compatUrl, gatewayUrl } from "../api/ai/gateway.ts";
 
 const env = {
 	AI_GATEWAY_ACCOUNT_ID: "abc-account",
@@ -54,5 +54,32 @@ describe("compatUrl", () => {
 	test("respects gateway name", () => {
 		const named = { ...env, AI_GATEWAY_NAME: "custom" };
 		expect(compatUrl(named)).toContain("/custom/compat/chat/completions");
+	});
+});
+
+// O teto de saída é 4096, não 1024. Um teto baixo faz modelo que raciocina
+// gastar tudo pensando e devolver conteúdo vazio — medido em três modelos, ver
+// o comentário em gateway.ts. Este teste existe para que ninguém "otimize" o
+// número de volta sem ler aquilo.
+describe("teto de tokens de saída", () => {
+	test("o padrão é 4096", async () => {
+		let sent: any;
+		const fetchSpy = async (_url: string, init: RequestInit) => {
+			sent = JSON.parse(init.body as string);
+			return new Response(
+				JSON.stringify({ choices: [{ message: { content: "oi" } }], model: "m", usage: {} }),
+				{ headers: { "content-type": "application/json" } },
+			);
+		};
+		const original = globalThis.fetch;
+		globalThis.fetch = fetchSpy as unknown as typeof fetch;
+		try {
+			await chat({ ...env, LLM_PROVIDER: "openrouter", LLM_MODEL: "m" } as any, [
+				{ role: "user", content: "oi" },
+			]);
+		} finally {
+			globalThis.fetch = original;
+		}
+		expect(sent.max_tokens).toBe(4096);
 	});
 });
