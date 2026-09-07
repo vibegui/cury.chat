@@ -195,6 +195,7 @@ table.bench .rank { color: var(--faint); width: 1%; padding-right: 0; }
 table.bench .tier { color: var(--ink-soft); white-space: nowrap; font-size: 13.5px; }
 table.bench .model { font-weight: 650; color: var(--ink); }
 table.bench .slug { display: block; font-size: 12px; font-weight: 400; color: var(--faint); margin-top: 1px; }
+table.bench tr.front td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
 table.bench tr.chosen { background: var(--accent-soft); }
 table.bench tr.chosen td:first-child { border-radius: 8px 0 0 8px; }
 table.bench tr.chosen td:last-child { border-radius: 0 8px 8px 0; }
