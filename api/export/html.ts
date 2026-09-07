@@ -5,6 +5,7 @@
 // self-contained HTML string (inline CSS, no external assets). No LLM in the
 // rendering path — agents can attach prose by passing per-thread `analysis`.
 
+import { mdToHtml } from "../lib/page.ts";
 import { citationSource, citationText, type Turn } from "../pipeline/persist.ts";
 
 export interface ExportThread {
@@ -412,38 +413,9 @@ function parseUtcDate(yyyymmdd: string): Date {
 	return new Date(Date.UTC(y || 1970, (m || 1) - 1, dd || 1));
 }
 
-// -----------------------------------------------------------------------------
-// Minimal markdown-to-HTML (paragraphs, bold, italic, lists)
-// -----------------------------------------------------------------------------
-
-export function mdToHtml(src: string): string {
-	if (!src) return "";
-	const trimmed = src.replace(/\r\n/g, "\n").trim();
-	if (!trimmed) return "";
-	const blocks = trimmed.split(/\n\s*\n/);
-	return blocks.map(renderBlock).join("\n");
-}
-
-function renderBlock(block: string): string {
-	const lines = block.split("\n");
-	const allBullets = lines.every((l) => /^\s*[-*]\s+/.test(l)) && lines.length > 0;
-	if (allBullets) {
-		const items = lines
-			.map((l) => l.replace(/^\s*[-*]\s+/, ""))
-			.map((l) => `<li>${inlineMd(escapeHtml(l))}</li>`)
-			.join("");
-		return `<ul>${items}</ul>`;
-	}
-	const escaped = escapeHtml(block).replace(/\n/g, "<br>");
-	return `<p>${inlineMd(escaped)}</p>`;
-}
-
-function inlineMd(s: string): string {
-	// Bold first (longer marker), then italic, so we don't eat **x** as *.
-	return s
-		.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-		.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
-}
+// Minimal markdown-to-HTML: single copy lives in lib/page.ts, since the topic
+// pages need the same renderer. Re-exported here so importers don't move.
+export { mdToHtml };
 
 // -----------------------------------------------------------------------------
 // Inline stylesheet — single source of truth so the output file is portable.

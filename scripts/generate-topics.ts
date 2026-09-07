@@ -5,12 +5,13 @@
 //   bun run topics --force      # regenera todos
 //   bun run topics educacao     # um slug específico
 //
-// O corpo das páginas de tópico vem daqui, não de texto escrito à mão. Duas
-// razões: a página passa a dizer exatamente o que o agente diria, com a mesma
-// ancoragem no acervo; e quando o acervo muda, regenerar é um comando em vez
-// de uma reescrita.
+// Isto é rascunho, não é o que a página serve. O corpo de /tema/:slug é
+// escrito à mão em content/topics.ts — a resposta do agente vinha com
+// preâmbulo e fecho de conversa, e o retrieval deixava capítulo inteiro do
+// plano de fora. O que sobra de valor aqui é comparação: rodar depois de mexer
+// no prompt ou no acervo e ver o que o agente responderia hoje.
 //
-// A saída é commitada e revisável. Rode, leia o diff, e só então mande.
+// A saída, content/topics.json, é commitada e revisável.
 
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
