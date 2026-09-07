@@ -46,6 +46,23 @@ function iconSvg(size: number): string {
 </svg>`;
 }
 
+/**
+ * The WhatsApp profile photo: same mark as the favicon, minus the rounded
+ * corner. WhatsApp crops avatars to a circle, and a squircle inside a circle
+ * loses its four corners and becomes a shape nobody drew. Full bleed instead,
+ * glyph centred at 42% of the width so it clears the crop with room to spare.
+ *
+ * The glyph's bounding box on the 200-unit canvas is x 28..152, y 44..114:
+ * centre (90, 79), 124 wide. That is where the scale and offset come from.
+ */
+function avatarSvg(size: number): string {
+	const k = (size * 0.42) / 124;
+	return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  <rect width="${size}" height="${size}" fill="${NAVY}"/>
+  ${glyph(CANVAS, k, size / 2 - 90 * k, size / 2 - 79 * k)}
+</svg>`;
+}
+
 const OG_W = 1200;
 const OG_H = 630;
 
@@ -129,6 +146,15 @@ writeFileSync(
 		.toBuffer(),
 );
 
+// 640×640: Meta's floor is 192×192 and 640 is what WhatsApp stores without
+// resampling. Not served by the Worker — it is uploaded in the Tyxter panel.
+writeFileSync(
+	join(OUT, "whatsapp-profile.png"),
+	await sharp(Buffer.from(avatarSvg(640)))
+		.png({ compressionLevel: 9 })
+		.toBuffer(),
+);
+
 console.log(`og.png            ${(og.byteLength / 1024).toFixed(0)} KB  ${OG_W}×${OG_H}`);
 for (const f of [
 	"icon.svg",
@@ -136,6 +162,7 @@ for (const f of [
 	"apple-touch-icon.png",
 	"icon-192.png",
 	"icon-512.png",
+	"whatsapp-profile.png",
 ]) {
 	console.log(`${f.padEnd(18)}${(Bun.file(join(OUT, f)).size / 1024).toFixed(1)} KB`);
 }

@@ -85,6 +85,7 @@ ${publishedTopics()
 			`  <url><loc>https://cury.chat/tema/${t.slug}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>`,
 	)
 	.join("\n")}
+  <url><loc>https://cury.chat/patrimonio</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
 </urlset>`,
 		type: "application/xml",
 	},

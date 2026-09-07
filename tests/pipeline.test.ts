@@ -114,6 +114,14 @@ describe("prettifySource", () => {
 		);
 	});
 
+	test("strips the whole dotted prefix of a plan slice, not just the first number", () => {
+		expect(
+			prettifySource(
+				"plano/01.39 Plano de Governo — 1. INTEGRAÇÃO NACIONAL DAS FORÇAS DE SEGURANÇA - Augusto Cury.md",
+			),
+		).toBe("Plano de Governo — 1. INTEGRAÇÃO NACIONAL DAS FORÇAS DE SEGURANÇA");
+	});
+
 	test("falls back to filename when nothing matches", () => {
 		expect(prettifySource("random-doc.md")).toBe("random-doc");
 	});
