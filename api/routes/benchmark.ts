@@ -213,34 +213,6 @@ ${HEADER}
       atacar adversário, ou omitir o CVV 188 diante de um sinal de risco.
     </p>
 
-    <h2 id="achado">O parâmetro que decidia tudo</h2>
-    <p>
-      A primeira rodada mediu também um teto de saída de 1024 tokens, que era o que este site
-      usava. Ele estrangulava todo modelo que raciocina antes de responder: o modelo gastava o
-      teto pensando e devolvia conteúdo vazio. Mesmas ${B.questions.length} perguntas, só esse
-      número mudando:
-    </p>
-    <div class="table-wrap">
-    <table class="bench">
-      <thead><tr><th>Modelo</th><th class="num">Nota a 1024</th><th class="num">Nota a 4096</th><th class="num">Respostas vazias</th></tr></thead>
-      <tbody>
-        <tr><td class="model">GLM-5.3 Flash</td><td class="num">67,4</td><td class="num strong">95,4</td><td class="num">3 → 0</td></tr>
-        <tr><td class="model">Kimi K2.6</td><td class="num">46,0</td><td class="num strong">86,5</td><td class="num">6 → 0</td></tr>
-        <tr><td class="model">Qwen3.8 Flash</td><td class="num">64,8</td><td class="num strong">82,8</td><td class="num">4 → 1</td></tr>
-        <tr><td class="model">DeepSeek V4 Flash</td><td class="num">91,4</td><td class="num">91,8</td><td class="num">0 → 0</td></tr>
-      </tbody>
-    </table>
-    </div>
-    <p class="footnote">
-      Teto é limite, não meta — quem responde em 300 tokens não gasta mais porque ele subiu. O
-      custo por turno mudou de $1,05 para $1,06 por mil turnos. E há uma consequência
-      desconfortável: o DeepSeek, que este site rodava, é o único imune, porque raciocina menos.
-      Quando ele ganhou a comparação anterior, ganhou de um campo que estava sendo estrangulado
-      por um parâmetro nosso. A escolha estava certa pelo motivo errado. Por isso a tabela acima
-      só tem configurações de 4096: medir de novo uma que já foi descartada é gastar chamada para
-      confirmar o óbvio.
-    </p>
-
     <h2 id="metodo">Como o teste funciona</h2>
 
     <h3>Todo candidato roda o site de verdade</h3>
@@ -263,13 +235,6 @@ ${HEADER}
       elas chegam sob identificadores opacos, embaralhadas, todas as da mesma pergunta num
       julgamento só. E vê os <em>dois</em> blocos de evidência que o modelo tinha: o texto
       recuperado do acervo e o prompt do sistema.
-    </p>
-    <p>
-      Esse segundo bloco não é detalhe. Numa versão anterior o juiz só recebia os nomes das
-      fontes, e marcou como invenção grave todo número específico que uma resposta trazia —
-      inclusive os que estavam no acervo. Todo modelo apanhou por acertar. Depois, já com o texto,
-      ainda reprovou a melhor configuração por “inventar” um programa que está escrito no prompt.
-      Duas rodadas inteiras foram descartadas por causa disso.
     </p>
 
     <h3>Custo é modelado, não cronometrado</h3>
