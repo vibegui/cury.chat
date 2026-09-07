@@ -179,8 +179,19 @@ const args = process.argv.slice(2);
 const force = args.includes("--force");
 const filters = args.filter((a) => !a.startsWith("--"));
 
+/**
+ * `?` and `#` are dropped from the filename — never from the title, which still
+ * heads the file in full.
+ *
+ * The R2 key is this filename, and wrangler parses the object path as a URL: a
+ * question mark truncates the key there and form-encodes what follows. The
+ * Gazeta do Povo piece landed as
+ * "…esquerda?+%28Gazeta+do+Povo%29+-+Augusto+Cury.md", and that string is what
+ * the reader saw where the citation should have read "(Gazeta do Povo)".
+ */
 function filename(s: Source): string {
-	return `${String(s.n).padStart(2, "0")}. ${s.title} - Augusto Cury.md`;
+	const safe = s.title.replace(/[?#]/g, "").replace(/\s+/g, " ").trim();
+	return `${String(s.n).padStart(2, "0")}. ${safe} - Augusto Cury.md`;
 }
 
 function header(s: Source): string {
