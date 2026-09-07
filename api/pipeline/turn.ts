@@ -9,7 +9,7 @@ import { loadSystemPrompt } from "../ai/system-prompt.ts";
 import type { Env } from "../env.ts";
 import { generate, generateStream } from "./generate.ts";
 import { appendTurns, type CitationRef, loadThread, type Turn } from "./persist.ts";
-import { retrieve } from "./retrieve.ts";
+import { formatCitationsBlock, retrieve } from "./retrieve.ts";
 
 export interface RunTurnInput {
 	threadId: string;
@@ -28,6 +28,12 @@ export interface RunTurnInput {
 	reasoning?: Record<string, unknown>;
 	/** Output-token ceiling. Only /test sets it — see the benchmark. */
 	maxTokens?: number;
+	/**
+	 * Devolve o bloco <context> literal que foi ao modelo. O benchmark precisa
+	 * dele: um juiz que só vê o NOME das fontes não consegue distinguir número
+	 * inventado de número recuperado, e chama de alucinação o que está ancorado.
+	 */
+	includeContext?: boolean;
 }
 
 export interface RunTurnResult {
@@ -38,6 +44,8 @@ export interface RunTurnResult {
 	model: string;
 	usage?: Turn["usage"];
 	timingsMs: { total: number; retrieve: number; generate: number };
+	/** Preenchido só quando input.includeContext. */
+	context?: string;
 }
 
 /**
@@ -119,6 +127,7 @@ export async function runTurn(env: Env, input: RunTurnInput): Promise<RunTurnRes
 			retrieve: prepared.retrieveMs,
 			generate: generateMs,
 		},
+		...(input.includeContext ? { context: formatCitationsBlock(prepared.citations) } : {}),
 	};
 }
 

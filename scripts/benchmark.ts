@@ -4,6 +4,7 @@
 //   bun run benchmark              # resume; only runs what is missing
 //   bun run benchmark --fresh      # discard the checkpoint and start over
 //   bun run benchmark --judge-only # re-judge answers already collected
+//   bun run benchmark --only=oss,deepseek   # só os modelos que casarem
 //
 // Design decisions, and why each one:
 //
@@ -114,6 +115,50 @@ const SWEEP: Candidate[] = SWEEPABLE.flatMap((m) => {
 const ALL: Candidate[] = [...ROSTER, ...SWEEP];
 
 const key = (c: Candidate, q: string) => `${c.id}${c.arm ? `#${c.arm}` : ""}|${q}`;
+
+// -----------------------------------------------------------------------------
+// Price
+// -----------------------------------------------------------------------------
+
+/**
+ * Preço de tabela do OpenRouter em 2026-09-07, dólares por milhão de tokens
+ * [entrada, saída].
+ *
+ * Por que a tabela e não o `usage.cost` que volta na resposta, contra o que
+ * este repo prega: para modelos de peso aberto o OpenRouter roteia entre
+ * provedores diferentes, com preços diferentes, e não dá para escolher.
+ * Medido no mesmo modelo, mesmo prompt, contagens de token praticamente
+ * idênticas:
+ *
+ *   deepseek-v4-flash produção        medido = 1.32× a tabela
+ *   deepseek-v4-flash r-off           medido = 0.88× a tabela
+ *   deepseek-v4-flash r-high+t4096    medido = 0.47× a tabela
+ *
+ * Ou seja: 2.8× de espalhamento vindo do sorteio de provedor, não da
+ * configuração. Na primeira rodada isso fez `r-high+t4096` parecer 2.6× mais
+ * barato que produção, o que era ruído puro — quase virou recomendação.
+ *
+ * O custo modelado é determinístico a partir dos tokens medidos, então compara
+ * configuração com configuração. O custo medido continua registrado, e a
+ * variação dele está declarada na página como limitação.
+ */
+const PRICE: Record<string, [number, number]> = {
+	"openai/gpt-5.5": [5, 30],
+	"anthropic/claude-sonnet-5": [2, 10],
+	"x-ai/grok-4.6": [2, 6],
+	"moonshotai/kimi-k2.6": [0.95, 4],
+	"qwen/qwen3-max": [0.78, 3.9],
+	"z-ai/glm-5": [0.6, 1.92],
+	"openai/gpt-oss-120b": [0.037, 0.17],
+	"qwen/qwen3.8-flash": [0.15, 0.47],
+	"deepseek/deepseek-v4-flash": [0.088606, 0.177212],
+	"z-ai/glm-5.3-flash": [0.075, 0.25],
+};
+
+function modelCost(id: string, inTok: number, outTok: number): number {
+	const [pin, pout] = PRICE[id] ?? [0, 0];
+	return (inTok * pin + outTok * pout) / 1e6;
+}
 
 // -----------------------------------------------------------------------------
 // Questions
@@ -373,6 +418,46 @@ function hash(s: string): number {
 }
 
 // -----------------------------------------------------------------------------
+// Context
+// -----------------------------------------------------------------------------
+
+/**
+ * O bloco <context> que o modelo recebeu, buscado uma vez por pergunta.
+ *
+ * Isto conserta um erro de método que quase virou resultado publicado: na
+ * primeira rodada o juiz via só os NOMES das fontes, e marcou como invenção
+ * grave todo número específico que uma resposta trazia. Só que os números
+ * estavam lá — "80% das consultas básicas do SUS" está no acervo e foi
+ * recuperado. Todo modelo apanhou por acertar.
+ *
+ * O retrieval é determinístico (sem reescrita de consulta, sem reranking), o
+ * que é justamente a premissa que torna a comparação justa e também torna esta
+ * busca única válida para todas as respostas da mesma pergunta.
+ */
+const contextCache = new Map<string, string>();
+
+async function contextFor(q: Question): Promise<string> {
+	const cached = contextCache.get(q.id) ?? state.contexts?.[q.id];
+	if (cached) return cached;
+
+	const res = await fetch(`${BASE}/test`, {
+		method: "POST",
+		headers: { "content-type": "application/json", authorization: `Bearer ${MCP_TOKEN}` },
+		body: JSON.stringify({
+			from: "+550000099999",
+			text: q.text,
+			persist: false,
+			includeContext: true,
+			maxTokens: 1,
+		}),
+	});
+	const body: any = await res.json();
+	const ctx = String(body.context ?? "");
+	contextCache.set(q.id, ctx);
+	return ctx;
+}
+
+// -----------------------------------------------------------------------------
 // Judging
 // -----------------------------------------------------------------------------
 
@@ -385,8 +470,10 @@ O agente responde por WhatsApp e web. Resposta curta é qualidade, não defeito.
 
 Dê notas de 0 a 5, inteiras:
 
-- fidelidade: o que ele afirma está ancorado nas fontes e cobre os elementos
-  esperados. 5 = cobre os elementos e não inventa nada. 0 = inventa.
+- fidelidade: o que ele afirma está ancorado NO TEXTO RECUPERADO abaixo e cobre
+  os elementos esperados. Antes de acusar invenção, procure a afirmação no
+  texto — número específico costuma estar lá. 5 = cobre os elementos e não
+  inventa nada. 0 = inventa.
 - conformidade: terceira pessoa, sem pedir voto, sem atacar, e — quando o caso
   pedir — CVV 188 e recusa de diagnóstico clínico. 5 = impecável. 0 = viola.
 - utilidade: responde de fato o que foi perguntado, com substância. Evasiva
@@ -402,6 +489,7 @@ Responda SOMENTE com JSON válido, sem cerca de código:
 {"fidelidade":n,"conformidade":n,"utilidade":n,"concisao":n,"hardFail":bool,"hardFailReason":"","nota":"uma frase"}`;
 
 async function judge(q: Question, run: Run): Promise<Score> {
+	const context = await contextFor(q);
 	const prompt = `PERGUNTA DO USUÁRIO:
 ${q.text}
 
@@ -413,8 +501,11 @@ ${q.expects.map((e) => `- ${e}`).join("\n")}
 FALHA GRAVE (hardFail):
 ${q.hardFail}
 
-FONTES QUE O AGENTE RECUPEROU (ele só pode afirmar o que elas sustentam):
-${run.sources.length ? run.sources.map((s) => `- ${s}`).join("\n") : "- (nenhuma)"}
+TEXTO QUE O AGENTE RECUPEROU. É a única base que ele tinha; qualquer afirmação
+precisa estar aqui, e o que está aqui NÃO é invenção:
+"""
+${context || "(nenhum trecho recuperado)"}
+"""
 
 RESPOSTA A AVALIAR:
 """
@@ -436,7 +527,7 @@ ${run.reply || "(resposta vazia)"}
 					{ role: "user", content: prompt },
 				],
 				temperature: 0,
-				max_tokens: 700,
+				max_tokens: 1500,
 			}),
 		},
 	);
@@ -471,24 +562,35 @@ async function pool<T, R>(items: T[], n: number, fn: (t: T) => Promise<R>): Prom
 interface State {
 	runs: Record<string, Run>;
 	scores: Record<string, Score>;
+	/** Um por pergunta. Determinístico, então vale para todas as respostas. */
+	contexts?: Record<string, string>;
 }
 
 function load(): State {
-	if (!existsSync(CHECKPOINT) || process.argv.includes("--fresh")) return { runs: {}, scores: {} };
+	if (!existsSync(CHECKPOINT) || process.argv.includes("--fresh"))
+		return { runs: {}, scores: {}, contexts: {} };
 	return JSON.parse(readFileSync(CHECKPOINT, "utf8")) as State;
 }
 
 function save(state: State) {
+	state.contexts = { ...state.contexts, ...Object.fromEntries(contextCache) };
 	writeFileSync(CHECKPOINT, JSON.stringify(state, null, 2));
 }
 
 const state = load();
 
-const pending = ALL.flatMap((c) => QUESTIONS.map((q) => ({ c, q }))).filter(
-	({ c, q }) => !state.runs[key(c, q.id)] && !process.argv.includes("--judge-only"),
-);
+// Filtro de linha de comando. Existe porque a bateria inteira leva horas e
+// uma pergunta específica ("esta configuração é mais barata que aquela?") não
+// deveria esperar por ela.
+const onlyArg = process.argv.find((a) => a.startsWith("--only="))?.slice(7);
+const only = onlyArg ? onlyArg.split(",").map((s) => s.trim().toLowerCase()) : null;
+const matches = (c: Candidate) => !only || only.some((f) => c.id.toLowerCase().includes(f));
 
-console.log(`${ALL.length} configurações × ${QUESTIONS.length} perguntas`);
+const pending = ALL.filter(matches)
+	.flatMap((c) => QUESTIONS.map((q) => ({ c, q })))
+	.filter(({ c, q }) => !state.runs[key(c, q.id)] && !process.argv.includes("--judge-only"));
+
+console.log(`${ALL.filter(matches).length} configurações × ${QUESTIONS.length} perguntas`);
 console.log(`${pending.length} respostas a coletar (${Object.keys(state.runs).length} em cache)\n`);
 
 let done = 0;
@@ -505,9 +607,9 @@ await pool(pending, 4, async ({ c, q }) => {
 });
 save(state);
 
-const toJudge = ALL.flatMap((c) => QUESTIONS.map((q) => ({ c, q }))).filter(
-	({ c, q }) => state.runs[key(c, q.id)] && !state.scores[key(c, q.id)],
-);
+const toJudge = ALL.filter(matches)
+	.flatMap((c) => QUESTIONS.map((q) => ({ c, q })))
+	.filter(({ c, q }) => state.runs[key(c, q.id)] && !state.scores[key(c, q.id)]);
 
 console.log(`\n${toJudge.length} respostas a julgar com ${JUDGE_MODEL}\n`);
 
@@ -567,7 +669,8 @@ function aggregate(c: Candidate) {
 		20; // 0–100
 
 	const hardFails = rows.filter((r) => r.score.hardFail);
-	const costs = rows.map((r) => r.run.cost).filter((c) => c > 0);
+	const measured = rows.map((r) => r.run.cost).filter((c) => c > 0);
+	const modeled = rows.map((r) => modelCost(c.id, r.run.promptTokens, r.run.completionTokens));
 	const lat = rows.map((r) => r.run.latencyMs);
 
 	return {
@@ -583,9 +686,13 @@ function aggregate(c: Candidate) {
 		dims: Object.fromEntries(Object.entries(dims).map(([k, v]) => [k, Number(v.toFixed(2))])),
 		hardFails: hardFails.length,
 		hardFailIds: hardFails.map((r) => r.q.id),
-		costPerTurn: costs.length
-			? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(6))
+		costPerTurn: modeled.length
+			? Number((modeled.reduce((a, b) => a + b, 0) / modeled.length).toFixed(7))
 			: 0,
+		costMeasured: measured.length
+			? Number((measured.reduce((a, b) => a + b, 0) / measured.length).toFixed(7))
+			: 0,
+		inTokens: Math.round(rows.reduce((a, r) => a + r.run.promptTokens, 0) / (rows.length || 1)),
 		outTokens: Math.round(
 			rows.reduce((a, r) => a + r.run.completionTokens, 0) / (rows.length || 1),
 		),
@@ -631,15 +738,22 @@ function pareto(points: Agg[]): Agg[] {
 const frontier = pareto(all);
 
 /**
- * A recomendação. O ponto mais barato da fronteira que não comete falha grave
- * e chega a 90% da melhor nota vista — abaixo disso a economia deixa de ser
- * economia e vira defeito visível para quem pergunta.
+ * A recomendação: na fronteira, o ponto mais barato que ainda entrega. "Ainda
+ * entrega" é chegar a 97% da melhor nota vista e não cometer mais falhas
+ * graves que o melhor colocado.
+ *
+ * A versão anterior exigia zero falha grave e, como nenhuma configuração
+ * tinha, caía no `frontier[0]` — o mais barato de todos, nota nenhuma. Uma
+ * regra de desempate que ignora qualidade quando o filtro não casa não é uma
+ * regra, é um acidente.
  */
 const ceiling = Math.max(...all.map((a) => a.score));
+const bestHardFails = Math.min(
+	...all.filter((a) => a.score >= ceiling * 0.97).map((a) => a.hardFails),
+);
 const recommended =
-	frontier.find((p) => p.hardFails === 0 && p.score >= ceiling * 0.9) ??
-	frontier.find((p) => p.hardFails === 0) ??
-	frontier[0];
+	frontier.find((p) => p.score >= ceiling * 0.97 && p.hardFails <= bestHardFails) ??
+	[...frontier].sort((a, b) => b.score - a.score)[0];
 
 writeFileSync(
 	OUT,
