@@ -151,6 +151,9 @@ export const STYLES = String.raw`/* Compartilhado pela landing e pelas páginas 
 .answer { margin-top: 30px; font-size: 17.5px; line-height: 1.72; text-wrap: pretty; }
 .answer p + p { margin-top: 0.9em; }
 .answer strong { font-weight: 680; }
+.answer ul { list-style: none; margin: 0.9em 0; display: grid; gap: 0.5em; }
+.answer li { padding-left: 18px; position: relative; }
+.answer li::before { content: "·"; position: absolute; left: 4px; color: var(--faint); }
 
 .sources-block { margin-top: 22px; font-size: 13.5px; color: var(--faint); }
 .sources-block > summary { cursor: pointer; list-style: none; display: inline-flex; gap: 6px; align-items: center; }

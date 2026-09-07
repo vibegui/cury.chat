@@ -6,26 +6,19 @@
 // estática, rápida e indexável, com um botão que abre o chat já com a pergunta
 // escrita.
 //
-// O corpo vem de content/topics.json, gerado rodando o próprio agente
-// (`bun run topics`). A página diz o que o agente diria, com as mesmas fontes.
+// O corpo vem escrito à mão de content/topics.ts, ancorado em corpus/. Era
+// gerado pelo agente; a resposta de chat trazia preâmbulo ("Olá! Sou o Cury
+// Chat…") e fecho ("quer que eu detalhe?") para dentro de uma página que não é
+// conversa. O porquê da troca está no topo de content/topics.ts.
 
 import { Hono } from "hono";
-import generated from "../../content/topics.json";
 import { type Topic, TOPICS, topicBySlug } from "../../content/topics.ts";
 import type { Env } from "../env.ts";
-import { esc, FOOTER, head, HEADER, prose, SITE } from "../lib/page.ts";
+import { esc, FOOTER, head, HEADER, mdToHtml, SITE } from "../lib/page.ts";
 import { CACHE_PAGE, serveStatic, staticAsset } from "../lib/static-asset.ts";
 
-interface GeneratedTopic {
-	slug: string;
-	answer: string;
-	sources: string[];
-	generatedAt: string;
-}
-
-const CONTENT = generated as unknown as Record<string, GeneratedTopic>;
 function otherTopics(current: string): string {
-	const rest = TOPICS.filter((t) => t.slug !== current && CONTENT[t.slug]);
+	const rest = TOPICS.filter((t) => t.slug !== current);
 	if (rest.length === 0) return "";
 	return `<section>
   <div class="wrap">
@@ -42,11 +35,12 @@ function otherTopics(current: string): string {
 </section>`;
 }
 
-function topicPage(topic: Topic, body: GeneratedTopic): string {
+function topicPage(topic: Topic): string {
 	const url = `${SITE}/tema/${topic.slug}`;
 	const chatHref = `/chat?q=${encodeURIComponent(topic.prompt)}`;
 
-	// FAQPage: a página é literalmente uma pergunta e a resposta ancorada.
+	// FAQPage: a página é literalmente uma pergunta e a resposta ancorada. Sem
+	// os asteriscos do markdown, que no snippet do buscador apareceriam crus.
 	const jsonLd = JSON.stringify({
 		"@context": "https://schema.org",
 		"@type": "FAQPage",
@@ -55,15 +49,17 @@ function topicPage(topic: Topic, body: GeneratedTopic): string {
 			{
 				"@type": "Question",
 				name: topic.title,
-				acceptedAnswer: { "@type": "Answer", text: body.answer },
+				acceptedAnswer: { "@type": "Answer", text: topic.body.replace(/\*\*?/g, "") },
 			},
 		],
 	});
 
+	// og:image aponta para a imagem do site: não há rota /tema/:slug/og.png, e
+	// apontar para ela deixava todo link compartilhado sem preview.
 	return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-${head(topic.title, topic.blurb, url, `${SITE}/tema/${topic.slug}/og.png`)}
+${head(topic.title, topic.blurb, url, `${SITE}/og.png`)}
 <script type="application/ld+json">${jsonLd}</script>
 </head>
 <body>
@@ -75,12 +71,12 @@ ${HEADER}
     <p class="lede">${esc(topic.blurb)}</p>
 
     <div class="answer">
-      ${prose(body.answer)}
+      ${mdToHtml(topic.body)}
     </div>
 
     <details class="sources-block">
-      <summary>${body.sources.length} ${body.sources.length === 1 ? "fonte" : "fontes"} usadas nesta resposta</summary>
-      <ul>${body.sources.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
+      <summary>${topic.sources.length} ${topic.sources.length === 1 ? "fonte" : "fontes"} desta página</summary>
+      <ul>${topic.sources.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>
     </details>
 
     <div class="cta-row">
@@ -90,9 +86,10 @@ ${HEADER}
 
     <div class="disclaimer">
       <strong>Como esta página foi feita.</strong>
-      O texto acima é a resposta do próprio agente, ancorada nas fontes listadas — não é
-      redação de campanha. Este é um projeto independente: não é a campanha, não é o Avante e
-      não é Augusto Cury. Respostas geradas por IA podem conter erros.
+      O texto acima foi compilado das fontes públicas listadas acima — plano de governo,
+      entrevistas e enciclopédia —, e não é redação de campanha: onde uma proposta é contestada
+      ou não traz número, a página diz. Projeto independente: não é a campanha, não é o Avante e
+      não é Augusto Cury. Confira na fonte antes de citar.
     </div>
   </div>
 </section>
@@ -121,16 +118,14 @@ ${HEADER}
   <div class="wrap">
     <h1>O que ele propõe, por assunto</h1>
     <p class="lede">
-      Cada página traz a resposta do agente sobre um eixo do plano de governo, com as fontes
-      que a sustentaram. Dá para ler direto ou abrir o chat e continuar perguntando.
+      Cada página resume um eixo do plano de governo protocolado no TSE, com as fontes que
+      sustentam o texto. Dá para ler direto ou abrir o chat e continuar perguntando.
     </p>
     <ul class="topic-list">
-      ${TOPICS.filter((t) => CONTENT[t.slug])
-				.map(
-					(t) =>
-						`<li><a href="/tema/${t.slug}"><span class="what">${esc(t.title)}</span><span class="meta">${esc(t.blurb)}</span></a></li>`,
-				)
-				.join("\n      ")}
+      ${TOPICS.map(
+				(t) =>
+					`<li><a href="/tema/${t.slug}"><span class="what">${esc(t.title)}</span><span class="meta">${esc(t.blurb)}</span></a></li>`,
+			).join("\n      ")}
     </ul>
     <p class="cta-note">
       Fora do plano de governo: <a href="/patrimonio">de onde vem o patrimônio dele</a>.
@@ -236,10 +231,9 @@ export const topicsRoute = new Hono<{ Bindings: Env }>();
 // Construídas uma vez por isolate: o conteúdo só muda em deploy.
 const INDEX = staticAsset(indexPage(), "text/html; charset=utf-8", CACHE_PAGE);
 const PAGES = new Map(
-	TOPICS.filter((t) => CONTENT[t.slug]).map((t) => [
-		t.slug,
-		staticAsset(topicPage(t, CONTENT[t.slug]), "text/html; charset=utf-8", CACHE_PAGE),
-	]),
+	TOPICS.map(
+		(t) => [t.slug, staticAsset(topicPage(t), "text/html; charset=utf-8", CACHE_PAGE)] as const,
+	),
 );
 
 const PATRIMONIO = staticAsset(patrimonioPage(), "text/html; charset=utf-8", CACHE_PAGE);
@@ -256,5 +250,5 @@ topicsRoute.get("/tema/:slug", (c) => {
 
 /** Slugs com página publicada — usado pelo sitemap. */
 export function publishedTopics(): Topic[] {
-	return TOPICS.filter((t) => CONTENT[t.slug] && topicBySlug(t.slug));
+	return TOPICS.filter((t) => topicBySlug(t.slug));
 }

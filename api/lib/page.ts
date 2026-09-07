@@ -10,19 +10,48 @@ export function esc(s: string): string {
 		.replace(/&/g, "&amp;")
 		.replace(/</g, "&lt;")
 		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;");
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
 }
 
 /**
- * O agente escreve markdown leve. Renderizar com uma dependência seria trazer
- * uma superfície de XSS para três construções, então o texto é escapado
- * primeiro e só depois **negrito** e parágrafos são reintroduzidos.
+ * Markdown leve — parágrafos, listas, **negrito** e *itálico*. Renderizar com
+ * uma dependência seria trazer uma superfície de XSS para três construções,
+ * então o texto é escapado primeiro e a marcação reintroduzida depois.
+ *
+ * Morava em export/html.ts. Veio para cá porque a versão que as páginas de
+ * tópico usavam não tratava bullet: `- item` virava parágrafo com o hífen
+ * literal no meio do texto, visível em produção em /tema/semipresidencialismo.
+ * Uma cópia só, com teste, em vez de duas divergindo.
  */
-export function prose(text: string): string {
-	return esc(text)
-		.split(/\n{2,}/)
-		.map((p) => `<p>${p.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").trim()}</p>`)
+export function mdToHtml(src: string): string {
+	if (!src) return "";
+	const trimmed = src.replace(/\r\n/g, "\n").trim();
+	if (!trimmed) return "";
+	return trimmed
+		.split(/\n\s*\n/)
+		.map(renderBlock)
 		.join("\n");
+}
+
+function renderBlock(block: string): string {
+	const lines = block.split("\n");
+	const allBullets = lines.every((l) => /^\s*[-*]\s+/.test(l)) && lines.length > 0;
+	if (allBullets) {
+		const items = lines
+			.map((l) => l.replace(/^\s*[-*]\s+/, ""))
+			.map((l) => `<li>${inlineMd(esc(l))}</li>`)
+			.join("");
+		return `<ul>${items}</ul>`;
+	}
+	return `<p>${inlineMd(esc(block).replace(/\n/g, "<br>"))}</p>`;
+}
+
+function inlineMd(s: string): string {
+	// Negrito antes de itálico (marcador mais longo), senão **x** vira *.
+	return s
+		.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+		.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
 }
 
 export function head(title: string, description: string, url: string, image: string): string {
