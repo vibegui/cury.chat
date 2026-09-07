@@ -240,7 +240,7 @@ function ChatView() {
 							}}
 							rows={1}
 							maxLength={2000}
-							placeholder="Pergunte sobre as propostas de Augusto Cury…"
+							placeholder="Pergunte sobre as propostas…"
 							className="composer-input"
 						/>
 						<button type="submit" disabled={pending || !draft.trim()} className="btn-send">

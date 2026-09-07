@@ -69,8 +69,17 @@ export const STYLES = String.raw`/* Compartilhado pela landing e pelas páginas 
   h1 em { font-style: normal; color: var(--accent); }
   .lede { font-size: clamp(18px, 2.3vw, 20px); color: var(--ink-soft); max-width: 58ch; text-wrap: pretty; }
 
-  h2 { font-size: 25px; font-weight: 750; letter-spacing: -0.5px; margin-bottom: 22px; text-wrap: balance; }
-  h3 { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  /* O ar acima de um título é o que diz que uma seção acabou e outra começou.
+     Sem ele, numa página longa como /benchmark, o h3 encosta no parágrafo
+     anterior e o leitor perde a divisão. O :first-child zera de novo, para o
+     título que abre um bloco não empurrar o próprio bloco para baixo. */
+  h2 {
+    font-size: 25px; font-weight: 750; letter-spacing: -0.5px;
+    margin-top: 62px; margin-bottom: 22px; text-wrap: balance;
+  }
+  h3 { font-size: 17px; font-weight: 700; margin-top: 36px; margin-bottom: 8px; }
+  h2:first-child, h3:first-child { margin-top: 0; }
+  h2 + h3 { margin-top: 0; }
 
   .cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 34px; }
   .cta {

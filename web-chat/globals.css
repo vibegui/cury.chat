@@ -360,6 +360,12 @@ a {
 }
 .composer-input::placeholder {
 	color: var(--faint);
+	/* O textarea tem uma linha de altura e cresce com o conteúdo digitado — mas
+	   o placeholder não conta como conteúdo. Sem isto ele quebra em duas linhas
+	   num telefone estreito e a segunda fica cortada pela borda de baixo. */
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .composer-input:focus {
 	border-color: var(--accent);
