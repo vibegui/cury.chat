@@ -37,7 +37,11 @@ AI_GATEWAY_NAME = "default"
 #               "openai/gpt-4o-mini", "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 #   openrouter: "google/gemini-3.5-flash", "anthropic/claude-sonnet-4-6", etc.
 LLM_PROVIDER = "openrouter"
-LLM_MODEL = "deepseek/deepseek-v4-flash"
+# Escolhido por medição, não por preço de tabela: maior nota das 16 configurações
+# testadas, acima de Sonnet 5 e GPT-5.5, por 1/38 do custo. Ver /benchmark e
+# scripts/benchmark.ts. Se trocar aqui, o teste de tests/benchmark-page.test.ts
+# quebra até a página ser regerada — de propósito.
+LLM_MODEL = "z-ai/glm-5.3-flash"
 # WhatsApp Business phone number id (Meta Business Manager → WhatsApp → API Setup).
 # Set this once you've bound your number — also keep it in .dev.vars so the
 # configure-webhook script can find it.
