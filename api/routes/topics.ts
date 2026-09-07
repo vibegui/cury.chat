@@ -13,6 +13,7 @@ import { Hono } from "hono";
 import generated from "../../content/topics.json";
 import { type Topic, TOPICS, topicBySlug } from "../../content/topics.ts";
 import type { Env } from "../env.ts";
+import { esc, FOOTER, head, HEADER, prose, SITE } from "../lib/page.ts";
 import { CACHE_PAGE, serveStatic, staticAsset } from "../lib/static-asset.ts";
 
 interface GeneratedTopic {
@@ -23,74 +24,6 @@ interface GeneratedTopic {
 }
 
 const CONTENT = generated as unknown as Record<string, GeneratedTopic>;
-const SITE = "https://cury.chat";
-
-function esc(s: string): string {
-	return s
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;");
-}
-
-/**
- * O agente escreve markdown leve. Renderizar com uma dependência seria trazer
- * uma superfície de XSS para três construções, então o texto é escapado
- * primeiro e só depois **negrito** e parágrafos são reintroduzidos.
- */
-function prose(text: string): string {
-	return esc(text)
-		.split(/\n{2,}/)
-		.map((p) => `<p>${p.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").trim()}</p>`)
-		.join("\n");
-}
-
-function head(title: string, description: string, url: string, image: string): string {
-	return `<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${esc(title)} · cury.chat</title>
-<meta name="description" content="${esc(description)}">
-<link rel="canonical" href="${url}">
-<meta name="theme-color" content="#0d3a63">
-<meta name="color-scheme" content="light dark">
-<meta property="og:type" content="article">
-<meta property="og:url" content="${url}">
-<meta property="og:site_name" content="cury.chat">
-<meta property="og:locale" content="pt_BR">
-<meta property="og:title" content="${esc(title)}">
-<meta property="og:description" content="${esc(description)}">
-<meta property="og:image" content="${image}">
-<meta property="og:image:secure_url" content="${image}">
-<meta property="og:image:type" content="image/png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${esc(title)}">
-<meta name="twitter:description" content="${esc(description)}">
-<meta name="twitter:image" content="${image}">
-<link rel="icon" href="/favicon.ico" sizes="32x32">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="stylesheet" href="/styles.css">`;
-}
-
-const HEADER = `<header>
-  <div class="wrap">
-    <a class="brand" href="/">
-      <img src="/icon.svg" alt="" width="30" height="30">
-      cury.chat <span>projeto independente</span>
-    </a>
-  </div>
-</header>`;
-
-const FOOTER = `<footer>
-  <div class="wrap">
-    <p><b>cury.chat</b> — projeto independente, sem vínculo com Augusto Cury, com a campanha ou com o Avante.</p>
-    <p>Respostas geradas por inteligência artificial a partir de fontes públicas. Podem conter erros — confira na fonte.</p>
-    <p>Em sofrimento? <b>CVV 188</b>, gratuito, 24 horas.</p>
-  </div>
-</footer>`;
-
 function otherTopics(current: string): string {
 	const rest = TOPICS.filter((t) => t.slug !== current && CONTENT[t.slug]);
 	if (rest.length === 0) return "";

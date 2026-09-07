@@ -27,6 +27,10 @@ interface TestRequest {
 	// forces it off, `{"effort":"medium"}` turns it on. Used by
 	// scripts/benchmark.ts to price reasoning on the same question.
 	reasoning?: Record<string, unknown>;
+	// Output-token ceiling, overriding the 1024 production uses. The benchmark
+	// raises it to find out whether truncation, not capability, is what makes a
+	// reasoning model come back empty.
+	maxTokens?: number;
 }
 
 export const testRoute = new Hono<{ Bindings: Env }>();
@@ -48,6 +52,7 @@ testRoute.post("/", async (c) => {
 		text,
 		model: body.model,
 		reasoning: body.reasoning,
+		maxTokens: body.maxTokens,
 		persist: body.persist !== false,
 		metadata: { phone: from, source: "test-endpoint" },
 	});
