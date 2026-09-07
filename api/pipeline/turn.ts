@@ -28,15 +28,12 @@ export interface RunTurnInput {
 	reasoning?: Record<string, unknown>;
 	/** Output-token ceiling. Only /test sets it — see the benchmark. */
 	maxTokens?: number;
-<<<<<<< HEAD
 	/**
 	 * Devolve o bloco <context> literal que foi ao modelo. O benchmark precisa
 	 * dele: um juiz que só vê o NOME das fontes não consegue distinguir número
 	 * inventado de número recuperado, e chama de alucinação o que está ancorado.
 	 */
 	includeContext?: boolean;
-=======
->>>>>>> origin/main
 }
 
 export interface RunTurnResult {
